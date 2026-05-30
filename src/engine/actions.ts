@@ -34,7 +34,7 @@ export function resolveCourseAction(
       applyEffect(deltas, ATTEND_EFFECT, mult)
       if (stats.mood >= 70) {
         desc = actionTexts.attend.moodHigh
-        add(deltas, 'credits', Math.round(2 * mult))
+        add(deltas, 'credits', Math.round(3 * mult))
       } else if (stats.mood <= 30) {
         desc = actionTexts.attend.moodLow
         add(deltas, 'credits', -Math.round(1 * mult))
@@ -65,7 +65,7 @@ export function resolveCourseAction(
       add(deltas, 'energy', Math.round((Math.floor(Math.random() * 6) - 2) * mult))
       if (checkRollCall(calcRollCallProb(course, skipHistoryCount, config))) {
         flags.rollCall = true
-        add(deltas, 'credits', -Math.round(3 * mult))
+        add(deltas, 'credits', -Math.round(2 * mult))
         desc = actionTexts.skip.rollCall
       } else {
         try {
@@ -89,7 +89,7 @@ export function resolveCourseAction(
       deltas.money = HIRE_SUB_EFFECT.money
       if (chance(HIRE_SUB_RISK)) {
         flags.hireFail = true
-        add(deltas, 'credits', -Math.round(3 * mult))
+        add(deltas, 'credits', -Math.round(2 * mult))
         desc = actionTexts.hireSub.fail.replace('{cost}', String(-HIRE_SUB_EFFECT.money))
       } else if (checkRollCall(calcRollCallProb(course, skipHistoryCount, config))) {
         desc = actionTexts.hireSub.rollCall.replace('{cost}', String(-HIRE_SUB_EFFECT.money))

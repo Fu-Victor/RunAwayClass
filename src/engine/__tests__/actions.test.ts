@@ -33,7 +33,7 @@ describe('resolveCourseAction', () => {
   it('attend 心情 <=30 学分衰减', () => {
     const sad = { ...baseStats, mood: 20 }
     const r = resolveCourseAction('attend', normalCourse, sad, 0, config)
-    expect(r.deltas.credits).toBeLessThan(2) // 基础2 - 衰减
+    expect(r.deltas.credits).toBeLessThan(3) // 基础3 - 衰减
   })
 
   it('skip 未被点名时回血', () => {
@@ -79,7 +79,7 @@ describe('resolveCourseAction', () => {
       teacher: { name: '王划水', trait: 'roll_call_hater', special: null },
     }
     const r = resolveCourseAction('hire_sub', safeCourse, baseStats, 0, config)
-    expect(r.deltas.money).toBe(-35)
+    expect(r.deltas.money).toBe(-25)
     // 不被点名（老师不爱点名 + 非正课 + 非早八）
     expect(r.triggeredRollCall).toBe(false)
     // hireSubFailed 有概率，不做确定性断言

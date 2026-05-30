@@ -3,21 +3,52 @@ import './Game.css'
 import {
   useGame,
   GameProvider,
-  COURSE_ACTIONS,
-  FREE_ACTIONS,
-  DAWN_ACTIONS,
+  NIGHT_ACTIONS,
+  gameThresholds,
+  difficultyConfig,
   PHASES,
   SCREENS,
-  periodGroups,
-  HIRE_COST,
 } from '../store/gameStore.jsx'
-import { sidebarStats, getStatDescription, getStatLevel, getNightMindset, getThresholdAlerts } from '../utils/gameHelpers.js'
+import { statMeta, topBarStats, sidebarStats } from '../data/statMeta.js'
+import { getStatDescription, getStatLevel, getNightMindset, getClassResultText, thresholdAlerts, getDailySettlementText } from '../data/textPools.js'
+import { periodGroups } from '../data/courses.js'
+
+// ==================== 静态数据 ====================
+const messages = [
+  { from: '舍友群聊', text: '兄弟，下节课老师可能查人，床位先别焊死。', unread: true },
+  { from: '班级通知', text: '明早 8 点有课，请同学们带上身体和灵魂。', unread: true },
+  { from: '老师私信', text: '你上次作业的存在感，比我的发际线还稀薄。', unread: false },
+]
 
 const statPercent = (value, max) => Math.min(100, Math.max(0, (value / max) * 100))
 
-// ==================== 右侧状态栏 ====================
+// ==================== 顶部/右侧 ====================
+function TopMeter() {
+  const { stats } = useGame()
+  return (
+    <header className="top-meter">
+      {topBarStats.map((key) => {
+        const meta = statMeta.find((m) => m.key === key)
+        if (!meta) return null
+        const value = stats[key] || 0
+        const pct = statPercent(value, meta.max)
+        const level = getStatLevel(key, value)
+        return (
+          <div key={key} className={`meter ${meta.tone} ${level === 'danger' || level === 'critical' ? 'low' : ''}`}>
+            <span>{meta.label}</span>
+            <div className="meter-track">
+              <i style={{ width: `${pct}%` }} />
+              <b style={{ left: `${Math.min(96, Math.max(4, pct))}%` }} />
+            </div>
+          </div>
+        )
+      })}
+    </header>
+  )
+}
+
 function SideStatus() {
-  const { stats, statMeta } = useGame()
+  const { stats } = useGame()
   return (
     <aside className="side-status">
       <h2>状态栏</h2>
@@ -33,20 +64,7 @@ function SideStatus() {
             <div key={key} className={`status-item ${level}`}>
               <span>{meta.label}</span>
               <strong>{meta.isCurrency ? `¥${value}` : value}</strong>
-              <div className="status-bar-wrap">
-                <i className="status-bar-fill" style={{ width: `${pct}%` }} />
-                {meta.thresholds?.map((t) => {
-                  const tPct = (t.value / meta.max) * 100
-                  return (
-                    <span
-                      key={t.value}
-                      className="threshold-arrow"
-                      style={{ left: `${Math.min(98, Math.max(2, tPct))}%`, borderTopColor: t.color }}
-                      title={`${t.label}：${meta.isCurrency ? '¥' : ''}${t.value}`}
-                    />
-                  )
-                })}
-              </div>
+              <div><i style={{ width: `${pct}%` }} /></div>
               <small>{desc}</small>
             </div>
           )
@@ -58,24 +76,33 @@ function SideStatus() {
 }
 
 function ThresholdAlerts() {
-  const { stats, gameThresholds, difficulty } = useGame()
-  const alerts = getThresholdAlerts(difficulty)
-  const msgs = []
-  if (stats.credits <= gameThresholds.creditWarning && stats.credits > 0) msgs.push(alerts.creditWarning[0])
-  if (stats.credits >= gameThresholds.creditTutor) msgs.push(alerts.creditTutor[0])
-  if (stats.energy < 25) msgs.push(alerts.energyLow[0])
-  if (stats.hunger < 25) msgs.push(alerts.hungerLow[0])
-  if (msgs.length === 0) return null
-  return <div className="threshold-alerts">{msgs.slice(0, 2).map((a, i) => <p key={i}>{a}</p>)}</div>
+  const { stats } = useGame()
+  const alerts = []
+  if (stats.credit <= gameThresholds.creditWarning && stats.credit > 0) alerts.push(thresholdAlerts.creditWarning[0])
+  if (stats.credit >= gameThresholds.creditTutor) alerts.push(thresholdAlerts.creditTutor[0])
+  if (stats.energy < 25) alerts.push(thresholdAlerts.energyLow[0])
+  if (stats.fullness < 25) alerts.push(thresholdAlerts.fullnessLow[0])
+  if (alerts.length === 0) return null
+  return <div className="threshold-alerts">{alerts.slice(0, 2).map((a, i) => <p key={i}>{a}</p>)}</div>
 }
 
 // ==================== 左侧手机 ====================
+const decisionMeta = [
+  { key: 'attend', label: '上课', color: '#79b8f5' },
+  { key: 'skip', label: '旷课', color: '#f06db7' },
+  { key: 'fun', label: '娱乐', color: '#ffd772' },
+  { key: 'sleep', label: '睡觉', color: '#9b61f5' },
+  { key: 'meal', label: '吃饭', color: '#ffa36b' },
+  { key: 'substitute', label: '代课', color: '#61e5e6' },
+  { key: 'work', label: '打工', color: '#83d77a' },
+  { key: 'tutor', label: '家教', color: '#fbbf24' },
+]
+
 function PhoneFrame() {
   const {
     phoneTab, setPhoneTab,
     todayCourses, coursesWithEstimate, currentCourse, phase, day,
-    stats, coursePlan, setCoursePlan, dawnAction, setDawnAction, submitNight, difficultyConfig: dc, gameThresholds,
-    eventMessage, phoneMessages,
+    stats, coursePlan, setCoursePlan, nightPlan, setNightPlan, submitNight,
   } = useGame()
 
   const [selectedCourseId, setSelectedCourseId] = useState(null)
@@ -88,26 +115,19 @@ function PhoneFrame() {
     ...g,
     courses: g.slots.map((slotIdx) => {
       const c = coursesWithEstimate.find((c) => c.slot === slotIdx) || todayCourses[slotIdx]
-      return c || { id: `empty-${slotIdx}`, name: '休息', teacher: '-', type: '水课', isFree: true, time: '', slot: slotIdx }
+      return c || { id: `empty-${slotIdx}`, name: '休息', teacher: '-', type: '水课', rollCall: '低', credit: 0, time: '', slot: slotIdx }
     }),
   }))
 
   const allCourses = grouped.flatMap((g) => g.courses)
-  const selectedCourse = allCourses.find((c) => c.id === selectedCourseId)
 
   const handleSelectCourse = (courseId) => {
     if (!canEdit) return
     setSelectedCourseId((prev) => (prev === courseId ? null : courseId))
   }
 
-  // 计算当前计划中找人代课的总花费
-  const hireCount = Object.values(coursePlan).filter((v) => v === 'hire_sub').length
-  const totalHireCost = hireCount * HIRE_COST
-
   const applyDecision = (actionKey) => {
     if (!canEdit || !selectedCourseId) return
-    if (actionKey === 'hire_sub' && coursePlan[selectedCourseId] !== 'hire_sub' && totalHireCost + HIRE_COST > stats.money) return
-    if (actionKey === 'tutor' && stats.credits < gameThresholds.creditTutor) return
     setCoursePlan(selectedCourseId, actionKey)
   }
 
@@ -122,57 +142,38 @@ function PhoneFrame() {
       <div className="phone-speaker" />
       <div className="phone-status"><span>9:41</span><span>5G 78%</span></div>
 
-      {/* 新消息横幅 */}
-      {eventMessage && (
-        <div className="phone-banner">
-          <span className="banner-avatar">{eventMessage.from.slice(0, 1)}</span>
-          <span>
-            <strong>{eventMessage.from}</strong>
-            <small>{eventMessage.text}</small>
-          </span>
-        </div>
-      )}
-
       {phoneTab === 'home' && (
         <div className="phone-home">
-          <button onClick={() => setPhoneTab('messages')} className="app-icon chat-app">
-            <span />微信
-            {eventMessage && <b className="app-badge" />}
-          </button>
+          <button onClick={() => setPhoneTab('messages')} className="app-icon chat-app"><span />微信{messages.some((m) => m.unread && !readMessages.has(m.from)) && <b />}</button>
           <button onClick={() => setPhoneTab('schedule')} className="app-icon schedule-app"><span />课表</button>
         </div>
       )}
 
-      {phoneTab === 'messages' && !openedMessage && (() => {
-        const msgs = phoneMessages.length > 0 ? phoneMessages : [{ from: '微信', text: '暂无消息' }]
-        return (
-          <div className="phone-page">
-            <button className="phone-back" onClick={() => setPhoneTab('home')}>‹</button>
-            <h2>微信</h2>
-            <div className="message-list">
-              {msgs.map((msg, idx) => {
-                const key = `${msg.from}-${idx}`
-                const isEventMsg = msg.text.startsWith('📬') || msg.text.startsWith('🌙')
-                const isUnread = !readMessages.has(key)
-                return (
-                  <button
-                    key={key}
-                    className={`message-item ${isEventMsg ? 'event-msg' : ''}`}
-                    onClick={() => {
-                      setReadMessages((prev) => new Set([...prev, key]))
-                      setOpenedMessage(msg)
-                    }}
-                  >
-                    <span className="avatar">{msg.from.slice(0, 1)}</span>
-                    <span><strong>{msg.from}</strong><small>{msg.text}</small></span>
-                    {isUnread && <i />}
-                  </button>
-                )
-              })}
-            </div>
+      {phoneTab === 'messages' && !openedMessage && (
+        <div className="phone-page">
+          <button className="phone-back" onClick={() => setPhoneTab('home')}>‹</button>
+          <h2>微信</h2>
+          <div className="message-list">
+            {messages.map((msg) => {
+              const isUnread = msg.unread && !readMessages.has(msg.from)
+              return (
+                <button
+                  key={msg.from}
+                  className="message-item"
+                  onClick={() => {
+                    setReadMessages((prev) => new Set([...prev, msg.from]))
+                    setOpenedMessage(msg)
+                  }}
+                >
+                  <span className="avatar">{msg.from.slice(0, 1)}</span>
+                  <span><strong>{msg.from}</strong><small>{msg.text}</small></span>
+                  {isUnread && <i />}
+                </button>
+              )
+            })}
           </div>
-        )
-      })()}
+        </div>
+      )}
 
       {phoneTab === 'messages' && openedMessage && (
         <div className="phone-page">
@@ -202,29 +203,22 @@ function PhoneFrame() {
                 <div className="schedule-course-strip">
                   {group.courses.map((course, idx) => {
                     const realIdx = group.slots[idx]
-                    const decision = coursePlan[course.id] || (course.isFree ? 'rest' : 'attend')
+                    const decision = coursePlan[course.id] || 'attend'
+                    const meta = decisionMeta.find((d) => d.key === decision)
                     const isSelected = selectedCourseId === course.id
                     const isNow = phase === PHASES.DAY && currentIdx === realIdx
-                    const actionsForSlot = course.isFree ? FREE_ACTIONS : COURSE_ACTIONS
-                    const meta = actionsForSlot.find((d) => d.key === decision)
-                    const riskColors = { '低': '#22c55e', '中': '#4a90d9', '高': '#f59e0b', '极高': '#ef4444' }
-                    const riskColor = course.isFree ? 'transparent' : (riskColors[course.estimatedRollCall] || '#999')
-                    const isSkip = decision === 'skip'
                     return (
                       <article
                         key={course.id}
-                        className={`phone-course-block ${isSelected ? 'selected' : ''} ${isNow ? 'now' : ''} ${canEdit ? 'editable' : ''} ${course.isFree ? 'free-slot' : ''}`}
+                        className={`phone-course-block ${isSelected ? 'selected' : ''} ${isNow ? 'now' : ''} ${canEdit ? 'editable' : ''}`}
                         onClick={() => handleSelectCourse(course.id)}
                       >
-                        <button className="course-tile" style={{ background: meta?.color || (course.isFree ? '#555' : '#4a6fa5') }}>
+                        <button className="course-tile" style={{ background: meta?.color }}>
                           <span>{course.name}</span>
                           <small>{course.teacher}</small>
-                          {!course.isFree && (
-                            <b className="risk-badge" style={{ background: riskColor }}>
-                              {course.estimatedRollCall || '中'}
-                            </b>
-                          )}
+                          <small>{course.type} · {course.credit}分</small>
                         </button>
+                        <i className="course-decision-dot" style={{ background: meta?.color }} title={meta?.label} />
                         <time>{course.time}</time>
                       </article>
                     )
@@ -233,16 +227,16 @@ function PhoneFrame() {
               </section>
             ))}
 
-            {/* 凌晨行为 */}
+            {/* 夜晚行为 */}
             <section className="schedule-period-row schedule-night-row">
               <strong>今夜</strong>
               <div className="night-phone-actions">
-                {DAWN_ACTIONS.map((a) => (
+                {NIGHT_ACTIONS.map((a) => (
                   <button
                     key={a.key}
                     disabled={!canEdit}
-                    className={dawnAction === a.key ? 'selected' : ''}
-                    onClick={() => setDawnAction(a.key)}
+                    className={nightPlan === a.key ? 'selected' : ''}
+                    onClick={() => setNightPlan(a.key)}
                   >
                     {a.label}
                   </button>
@@ -254,54 +248,28 @@ function PhoneFrame() {
             {canEdit && (
               <div className="phone-decision-bar">
                 <div className="decision-bar-label">
-                  {selectedCourse
-                    ? `已选中：${selectedCourse.name}${selectedCourse.isFree ? '（空闲时段）' : ''}`
+                  {selectedCourseId
+                    ? `已选中：${allCourses.find((c) => c.id === selectedCourseId)?.name || '—'}`
                     : '点选课程 → 点下方按钮决定'}
                 </div>
                 <div className="decision-bar-btns">
-                  {selectedCourse && !selectedCourse.isFree && COURSE_ACTIONS.map((d) => {
-                    const alreadyHire = coursePlan[selectedCourse.id] === 'hire_sub'
-                    const overBudget = d.key === 'hire_sub' && !alreadyHire && totalHireCost + HIRE_COST > stats.money
-                    const tutorLocked = d.key === 'tutor' && stats.credits < gameThresholds.creditTutor
-                    const hirePoor = d.key === 'hire_sub' && stats.money < HIRE_COST
-                    const disabled = hirePoor || overBudget || tutorLocked
-                    const reason = tutorLocked
-                      ? `需学分 ≥ ${gameThresholds.creditTutor} 解锁家教`
-                      : overBudget
-                        ? `余额不足：还需 ¥${totalHireCost + HIRE_COST - stats.money}`
-                        : hirePoor
-                          ? `余额不足：代课费 ¥${HIRE_COST}`
-                          : ''
+                  {decisionMeta.map((d) => {
+                    const disabled =
+                      !selectedCourseId ||
+                      (d.key === 'tutor' && stats.credit < gameThresholds.creditTutor)
                     return (
                       <button
                         key={d.key}
                         disabled={disabled}
                         className="decision-btn"
-                        style={{ background: d.color, opacity: disabled ? 0.3 : 1 }}
+                        style={{ background: d.color }}
                         onClick={() => applyDecision(d.key)}
-                        title={reason || undefined}
                       >
                         {d.label}
-                        {d.key === 'hire_sub' ? ` ¥${HIRE_COST}` : ''}
-                        {tutorLocked ? ` ≥${gameThresholds.creditTutor}学分` : ''}
+                        {d.key === 'tutor' && stats.credit < gameThresholds.creditTutor && '🔒'}
                       </button>
                     )
                   })}
-                  {selectedCourse && selectedCourse.isFree && FREE_ACTIONS.map((d) => (
-                    <button
-                      key={d.key}
-                      className="decision-btn"
-                      style={{ background: d.color }}
-                      onClick={() => applyDecision(d.key)}
-                    >
-                      {d.label}
-                    </button>
-                  ))}
-                  {!selectedCourse && (
-                    <span style={{ fontSize: '0.8rem', color: '#888', padding: '4px 8px' }}>
-                      点击上方课程后选择行为
-                    </span>
-                  )}
                 </div>
               </div>
             )}
@@ -318,52 +286,28 @@ function PhoneFrame() {
 
 // ==================== 中央区域 ====================
 function BottomConsole() {
-  const { history, stats, gameThresholds } = useGame()
-  const [expanded, setExpanded] = useState(false)
-  const buff = stats.credits >= gameThresholds.creditTutor ? '学神光环' : '暂无'
-  const debuff = stats.mood < 25 ? '生无可恋' : stats.energy < 25 ? '困成标本' : stats.hunger < 15 ? '胃在抗议' : '暂无'
-  const recentLogs = history.slice(0, 5)
-
+  const { history, stats } = useGame()
+  const buff = stats.credit >= gameThresholds.creditTutor ? '学神光环' : '暂无'
+  const debuff = stats.mood < 25 ? '生无可恋' : stats.energy < 25 ? '困成标本' : stats.fullness < 15 ? '胃在抗议' : '暂无'
   return (
     <footer className="bottom-console">
       <div className="buff-column"><strong>buff</strong><span>{buff}</span><strong>debuff</strong><span>{debuff}</span></div>
-      <div
-        className={`log-panel ${expanded ? 'log-expanded' : ''}`}
-        onClick={() => setExpanded((v) => !v)}
-        title={expanded ? '点击收起' : '点击展开历史'}
-        role="button"
-        tabIndex={0}
-      >
-        {expanded ? (
-          <ul className="log-list">
-            {recentLogs.map((log, i) => (
-              <li key={i} className={i === 0 ? 'log-latest' : ''}>{log}</li>
-            ))}
-          </ul>
-        ) : (
-          <p>{history[0]}</p>
-        )}
-      </div>
-      <div className="history-stack"><button>¥{stats.money}</button><button>舍友 {stats.roommateFavor}</button></div>
+      <div className="log-panel"><p>{history[0]}</p></div>
+      <div className="history-stack"><button>¥{stats.money}</button><button>舍友 {stats.roommate}</button></div>
     </footer>
   )
 }
 
 /** 夜晚：提示用户在手机中做决策 */
 function NightPhaseCenter() {
-  const { stats, setPhoneTab, skipCount } = useGame()
+  const { stats, setPhoneTab } = useGame()
   const mindset = getNightMindset(stats)
-  const riskLevel = skipCount < 2 ? '安全' : skipCount < 5 ? '注意' : skipCount < 9 ? '危险' : '高危'
   return (
     <>
       <p className="phase-pill">夜晚决策</p>
       <div className="day-panel night-hint-panel">
         <h2>{mindset}</h2>
-        <div className="risk-summary">
-          <span className="risk-label">累计旷课 <b>{skipCount}</b> 次</span>
-          <span className={`risk-level risk-${riskLevel}`}>点名风险：{riskLevel}</span>
-        </div>
-        <p>在左侧手机的「课表」中安排明天每节课的行为。课程卡片上的<b>彩色标签</b>显示该节课的估算点名概率——旷课越多，概率越高。</p>
+        <p>在左侧手机的「课表」中安排明天每节课的上课/旷课/代课，以及今晚的行为。</p>
         <button className="primary-action" onClick={() => setPhoneTab('schedule')}>打开课表安排</button>
       </div>
     </>
@@ -372,107 +316,97 @@ function NightPhaseCenter() {
 
 /** 白天：推进课程 */
 function DayPhaseCenter() {
-  const { currentCourse: course, coursePlan, advanceCourse, nextCourse, skipCount, lastActionResult } = useGame()
-
-  // 刚完成一节课，显示结果
-  if (lastActionResult) {
-    const { courseName, actionKey, description, deltas, triggeredRollCall, triggeredSleep, triggeredPhone, hireSubFailed } = lastActionResult
-    const actionLabel = [...COURSE_ACTIONS, ...FREE_ACTIONS].find((a) => a.key === actionKey)?.label || actionKey
-
-    // 提取数值变动中非零的关键项
-    const deltaEntries = deltas ? Object.entries(deltas).filter(([, v]) => v !== 0 && v !== undefined) : []
-    const labelMap = { credits: '学分', mood: '心情', energy: '精力', hunger: '饱腹', entertainment: '娱乐', money: '金钱', roommateFavor: '舍友' }
-
-    return (
-      <>
-        <p className="phase-pill">课程结果</p>
-        <div className="day-panel course-result-panel">
-          <h2>{courseName}</h2>
-          <p className="result-desc">{description}</p>
-
-          {/* 数值变动 */}
-          {deltaEntries.length > 0 && (
-            <div className="delta-list">
-              {deltaEntries.map(([key, val]) => (
-                <span key={key} className={`delta-item ${val > 0 ? 'delta-up' : 'delta-down'}`}>
-                  {labelMap[key] || key} {val > 0 ? '+' : ''}{val}
-                </span>
-              ))}
-            </div>
-          )}
-
-          {/* 没去上课被点名：扣分了 */}
-          {triggeredRollCall && actionKey !== 'attend' && (
-            <div className="result-alert result-alert-danger">
-              ⚠️ 老师点名了！你没在教室，学分扣了 {(deltas?.credits || 0) < 0 ? Math.abs(deltas.credits) : 3} 分。
-            </div>
-          )}
-          {/* 在教室被点名：只是答个到 */}
-          {triggeredRollCall && actionKey === 'attend' && (
-            <div className="result-alert result-alert-safe">
-              ✅ 老师点名了，你在教室，正常答到。
-            </div>
-          )}
-          {/* 没去上课但没被点：赌赢了 */}
-          {!triggeredRollCall && actionKey !== 'attend' && actionKey !== 'hire_sub' && (
-            <div className="result-alert result-alert-safe">
-              ✅ 安全过关，老师没点名！
-            </div>
-          )}
-          {triggeredSleep && (
-            <div className="result-alert result-alert-warn">
-              😴 太困了在课上睡着了，错过了部分内容。
-            </div>
-          )}
-          {triggeredPhone && (
-            <div className="result-alert result-alert-warn">
-              📱 忍不住刷了手机，老师多看了你两眼。
-            </div>
-          )}
-          {hireSubFailed && (
-            <div className="result-alert result-alert-danger">
-              💸 找的代课人也没去！钱白花了还被扣分。
-            </div>
-          )}
-          <button className="primary-action" onClick={nextCourse}>继续</button>
-        </div>
-      </>
-    )
+  const { currentCourse: course, coursePlan, stats, advanceCourse, incrementCounter } = useGame()
+  const actionKey = coursePlan[course?.id] || 'attend'
+  const labelMap = {
+    attend: '上课', skip: '旷课', fun: '娱乐', sleep: '睡觉', meal: '吃饭',
+    substitute: '代课', work: '打工', tutor: '家教',
   }
+  const actionLabel = labelMap[actionKey] || '上课'
 
-  if (!course) {
-    return (
-      <>
-        <p className="phase-pill">白天推进</p>
-        <div className="day-panel">
-          <h2>无课程安排</h2>
-          <button className="primary-action" onClick={advanceCourse}>推进</button>
-        </div>
-      </>
-    )
+  const isSkipping = ['skip', 'fun', 'sleep', 'meal', 'work', 'tutor', 'substitute'].includes(actionKey)
+
+  const handleAdvance = () => {
+    const moodBonus = stats.mood >= 80 ? 1 : stats.mood < 35 ? -1 : 0
+    const highRisk = ['高', '极高'].includes(course.rollCall) || course.slot === 0
+    const caught = highRisk && Math.random() < 0.58
+    let delta, text
+
+    if (actionKey === 'attend') {
+      delta = {
+        credit: course.credit + moodBonus,
+        energy: -gameThresholds.baseEnergyDrain,
+        fullness: -gameThresholds.baseFullnessDrain,
+        entertainment: -gameThresholds.baseEntertainmentDrain,
+        mood: course.slot === 0 ? -1 : 1,
+      }
+      text = getClassResultText('attend')
+    } else {
+      incrementCounter('skipCount')
+      if (caught) {
+        // 点名被抓，额外扣学分（-30%）
+        delta = { credit: -4, mood: -1, fullness: -3 }
+        if (actionKey === 'fun') {
+          delta.entertainment = 10; delta.energy = -3
+          text = `你在${course.name}课上玩手机，${course.teacher}把你揪了出来。`
+        } else if (actionKey === 'sleep') {
+          delta.energy = 8
+          text = `你在${course.name}课上睡着了，${course.teacher}叫醒你时全班都在笑。`
+        } else if (actionKey === 'meal') {
+          delta.fullness = 10; delta.money = -12
+          text = `你在食堂大快朵颐时${course.teacher}点名了，嘴里还嚼着红烧肉。`
+        } else if (actionKey === 'work') {
+          delta.money = 15; delta.energy = -10
+          text = `打工回来发现${course.teacher}点名了，血亏。`
+        } else if (actionKey === 'tutor') {
+          delta.money = 15; delta.credit = -1; delta.energy = -13
+          text = `家教去了，但${course.teacher}点名了，两头不讨好。`
+        } else if (actionKey === 'substitute') {
+          delta.money = 20; delta.energy = -13
+          text = `你帮人代课却错过了自己的课，${course.teacher}记了你一笔。`
+        } else {
+          // skip
+          delta.energy = 10; delta.entertainment = 8; delta.fullness = -3
+          text = `你旷了《${course.name}》，${course.teacher}点名了，快乐瞬间打折。`
+        }
+      } else {
+        // 没被抓（负增益 -30%）
+        if (actionKey === 'fun') {
+          delta = { entertainment: 22, energy: -4, fullness: -4, mood: 6 }
+          text = `你在${course.name}时段尽情娱乐，快乐指数飙升！`
+        } else if (actionKey === 'sleep') {
+          delta = { energy: 22, entertainment: -1, fullness: -3, mood: 3 }
+          text = `你美美睡了一觉，精力回满，神清气爽。`
+        } else if (actionKey === 'meal') {
+          delta = { fullness: 16, energy: 5, money: -10, mood: 5 }
+          text = `你去食堂搓了一顿，肚子饱了心情好了。钱包瘦了。`
+        } else if (actionKey === 'work') {
+          delta = { money: 30, energy: -15, fullness: -6, entertainment: -3, mood: -1 }
+          text = `你用上课时间打工，赚了 ¥30，但疲惫不堪。`
+        } else if (actionKey === 'tutor') {
+          delta = { money: 25, credit: 3, energy: -14, fullness: -4, mood: -1 }
+          text = `你给学弟学妹做家教，赚了 ¥25，还巩固了知识。`
+        } else if (actionKey === 'substitute') {
+          delta = { money: gameThresholds.substituteEarn, credit: 1, energy: -13, fullness: -6, mood: -1 }
+          text = getClassResultText('substitute')
+        } else {
+          delta = { energy: 16, entertainment: 10, fullness: -4, mood: 5 }
+          text = getClassResultText('skip')
+        }
+      }
+    }
+
+    advanceCourse(delta, text, isSkipping || Math.random() < 0.35)
   }
-
-  const actionKey = coursePlan[course.id] || (course.isFree ? 'rest' : 'attend')
-  const actionsForSlot = course.isFree ? FREE_ACTIONS : COURSE_ACTIONS
-  const actionMeta = actionsForSlot.find((a) => a.key === actionKey)
-  const actionLabel = actionMeta?.label || actionKey
-  const riskText = course.isFree ? null : (
-    `点名风险：${course.estimatedRollCall || '中'} | 累计旷课 ${skipCount} 次`
-  )
 
   return (
     <>
       <p className="phase-pill">白天推进</p>
       <div className="day-panel">
         <div className="student-animation"><span /></div>
-        <h2>{course.time} · {course.name}</h2>
-        <p>
-          {course.isFree
-            ? '空闲时段'
-            : `${course.teacher} · ${course.type} · ${riskText}`}
-        </p>
-        <p>你的安排：<b>{actionLabel}</b></p>
-        <button className="primary-action" onClick={advanceCourse}>推进这节课</button>
+        <h2>{course?.time} · {course?.name}</h2>
+        <p>{course?.teacher} 正在教室里……夜前安排：{actionLabel}</p>
+        <button className="primary-action" onClick={handleAdvance}>推进这节课</button>
       </div>
     </>
   )
@@ -488,12 +422,10 @@ function EventPanel() {
       <div className="event-card event-center-card">
         <p className="eyebrow">随机事件</p>
         <h2>{currentEvent.title}</h2>
-        <p>{currentEvent.description}</p>
+        <p>{currentEvent.body}</p>
         <div className="event-options">
-          {currentEvent.options.map((opt, i) => (
-            <button key={opt.text} onClick={() => resolveEvent(i)}>
-              {opt.text}
-            </button>
+          {currentEvent.options.map((opt) => (
+            <button key={opt.label} onClick={() => resolveEvent(opt.delta, opt.text)}>{opt.label}</button>
           ))}
         </div>
       </div>
@@ -503,30 +435,14 @@ function EventPanel() {
 
 /** 每日结算 */
 function SettlementPhase() {
-  const { stats, day, settleDay, settlementResult, dismissSettlement } = useGame()
-
-  if (settlementResult) {
-    return (
-      <>
-        <p className="phase-pill">每日结算</p>
-        <div className="settlement-panel">
-          <h2>第 {day - 1} 天结算</h2>
-          <p>{settlementResult}</p>
-          <div className="result-stats">
-            <p>学分：{stats.credits} | 心情：{stats.mood} | 金钱：¥{stats.money} | 舍友好感：{stats.roommateFavor}</p>
-          </div>
-          <button className="primary-action" onClick={dismissSettlement}>进入第 {day} 天</button>
-        </div>
-      </>
-    )
-  }
-
+  const { stats, day, settleDay } = useGame()
+  const dailyText = getDailySettlementText(stats)
   return (
     <>
       <p className="phase-pill">每日结算</p>
       <div className="settlement-panel">
         <h2>第 {day} 天结束</h2>
-        <p>期末考倒数 {8 - day} 天，你还能撑多久？</p>
+        <p>{dailyText}</p>
         <button className="primary-action" onClick={settleDay}>进入下一天</button>
       </div>
     </>
@@ -544,7 +460,7 @@ function ResultScreen() {
         <h2>{result.failed ? result.title : `评级 ${result.rating}：${result.title}`}</h2>
         <p>{result.desc}</p>
         <div className="result-stats">
-          <p>最终学分：{stats.credits} | 心情：{stats.mood} | 金钱：¥{stats.money} | 舍友好感：{stats.roommateFavor}</p>
+          <p>最终学分：{stats.credit} | 心情：{stats.mood} | 金钱：¥{stats.money} | 舍友好感：{stats.roommate}</p>
         </div>
         <button className="primary-action" onClick={() => setScreen(SCREENS.MENU)}>回到主界面</button>
       </div>
@@ -572,22 +488,17 @@ function MenuScreen() {
 }
 
 function DifficultyScreen() {
-  const { startGame, setScreen, difficultyConfig: dc } = useGame()
-  const captions = {
-    easy: '水课多，老师慈眉善目，点名少',
-    normal: '标准大学生生存体验，各半',
-    hard: '早八、点名狂魔、作业一起上桌',
-  }
+  const { startGame, difficulty, setScreen } = useGame()
   return (
     <div className="game-shell menu-shell">
       <section className="start-panel difficulty-panel">
         <p className="eyebrow">先选一个生存难度</p>
         <h1>选择难度</h1>
         <div className="difficulty-grid">
-          {(['easy', 'normal', 'hard']).map((key) => (
-            <button key={key} onClick={() => startGame(key)}>
-              <span>{key === 'easy' ? '轻松' : key === 'normal' ? '普通' : '困难'}</span>
-              <small>{captions[key]}</small>
+          {Object.entries(difficultyConfig).map(([key, item]) => (
+            <button key={key} className={difficulty === key ? 'selected' : ''} onClick={() => startGame(key)}>
+              <span>{item.label}</span>
+              <small>{item.caption}</small>
             </button>
           ))}
         </div>
@@ -611,12 +522,12 @@ function SimplePanel({ title, lines, onBack }) {
 
 // ==================== 主游戏画面 ====================
 function GameBoard() {
-  const { phase, stats, currentEvent, lastActionResult } = useGame()
-  const flashClass = lastActionResult?.triggeredRollCall ? 'roll-call-flash' : ''
+  const { phase, stats, currentEvent } = useGame()
   return (
-    <div className={`game-shell ${stats.mood < 20 ? 'danger-mood' : ''} ${flashClass}`}>
+    <div className={`game-shell ${stats.mood < 20 ? 'danger-mood' : ''}`}>
       <PhoneFrame />
-      <main className="control-board no-top-meter">
+      <main className="control-board">
+        <TopMeter />
         <section className="stage">
           <div className="dorm-visual" aria-hidden="true">
             <div className="window-view" />
@@ -627,7 +538,7 @@ function GameBoard() {
           </div>
           <div className="stage-overlay">
             {phase === PHASES.NIGHT && <NightPhaseCenter />}
-            {phase === PHASES.DAY && currentEvent && !lastActionResult && <EventPanel />}
+            {phase === PHASES.DAY && currentEvent && <EventPanel />}
             {phase === PHASES.DAY && !currentEvent && <DayPhaseCenter />}
             {phase === PHASES.SETTLEMENT && <SettlementPhase />}
             {phase === PHASES.RESULT && <ResultScreen />}
