@@ -39,6 +39,24 @@ freeSlot:
   eat:              "趁没课赶紧去食堂搓一顿，吃饱了才有力气面对接下来的课"
   entertain:        "没课就是用来摸鱼的，掏出手机快乐一下，有人找就说在图书馆"
 
+uiActions:
+  # {courseName} 和 {teacher} 会被替换为实际课程名和老师名
+  fun:
+    rollCall: "{courseName}课上你溜去娱乐，结果{teacher}点名了，快乐瞬间打折。"
+    safe:     "{courseName}时段你尽情娱乐，快乐指数飙升！"
+  sleep:
+    rollCall: "{courseName}课上你在宿舍睡大觉，{teacher}点名了都没听到。"
+    safe:     "{courseName}时段你美美补了一觉，精力回满。"
+  meal:
+    rollCall: "{courseName}课上你在食堂大快朵颐，{teacher}点名时你正嚼着红烧肉。"
+    safe:     "{courseName}时段你去食堂搓了一顿，肚子饱了心情好了。"
+  work:
+    rollCall: "打工回来发现{teacher}点名了，赚的钱还不够补扣的学分。"
+    safe:     "{courseName}时段你打工赚了外快，虽然累但钱包鼓了。"
+  tutor:
+    rollCall: "家教回来发现{teacher}点名了，两头不讨好。"
+    safe:     "{courseName}时段你给学弟学妹做家教，赚了钱还巩固了知识。"
+
 # ========================
 # 编写说明
 # ========================
@@ -47,3 +65,4 @@ freeSlot:
 # 3. suffix 类字段会拼接在前一段描述之后，以空格起始即可
 # 4. successPool 为随机池，引擎会从中随机选一条展示
 # 5. 每条文案控制在 40 字以内，保持节奏紧凑
+# 6. uiActions 中的 {courseName} / {teacher} 会被前端替换为实际值

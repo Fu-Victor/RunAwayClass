@@ -7,7 +7,7 @@ import { findEligibleEvents, tryTriggerEvent, resolveEventOption, resolveText } 
 import { settleDay, applyDeltas } from '../engine/settlement'
 import { evaluate, evaluateFailure } from '../engine/evaluation'
 import { finalizeCourses, getEstimatedProbLabel } from '../engine/courseGen'
-import { eventPool, courseNames, teacherNames } from '../content/loader'
+import { eventPool, courseNames, teacherNames, actionTexts } from '../content/loader'
 
 export const PHASES = { MENU: 'menu', DIFFICULTY: 'difficulty', NIGHT: 'night', DAY: 'day', SETTLEMENT: 'settlement', RESULT: 'result' }
 export const SCREENS = { MENU: 'menu', DIFFICULTY: 'difficulty', HISTORY: 'history', TITLES: 'titles', CREDITS: 'credits', GAME: 'game' }
@@ -199,6 +199,7 @@ const initialState = {
   moodSnapshots: [],
   result: null,
   lastActionResult: null,
+  settlementResult: null,
 }
 
 function gameReducer(state, action) {
@@ -293,26 +294,13 @@ function gameReducer(state, action) {
         result.deltas.money = HIRE_SUB_EFFECT.money
       }
 
-      // UI 层特有行为：覆盖引擎的通用描述为具体行为描述
-      const UI_DESC = {
-        fun: result.triggeredRollCall
-          ? `${course.name}课上你溜去娱乐，结果${course.teacher}点名了，快乐瞬间打折。`
-          : `${course.name}时段你尽情娱乐，快乐指数飙升！`,
-        sleep: result.triggeredRollCall
-          ? `${course.name}课上你在宿舍睡大觉，${course.teacher}点名了都没听到。`
-          : `${course.name}时段你美美补了一觉，精力回满。`,
-        meal: result.triggeredRollCall
-          ? `${course.name}课上你在食堂大快朵颐，${course.teacher}点名时你正嚼着红烧肉。`
-          : `${course.name}时段你去食堂搓了一顿，肚子饱了心情好了。`,
-        work: result.triggeredRollCall
-          ? `打工回来发现${course.teacher}点名了，赚的钱还不够补扣的学分。`
-          : `${course.name}时段你打工赚了外快，虽然累但钱包鼓了。`,
-        tutor: result.triggeredRollCall
-          ? `家教回来发现${course.teacher}点名了，两头不讨好。`
-          : `${course.name}时段你给学弟学妹做家教，赚了钱还巩固了知识。`,
-      }
-      if (UI_DESC[uiActionKey]) {
-        result.description = UI_DESC[uiActionKey]
+      // UI 层特有行为：用 YAML 文案替代 engine 的 skip 通用描述
+      if (actionTexts.uiActions[uiActionKey]) {
+        const tpl = actionTexts.uiActions[uiActionKey]
+        const template = result.triggeredRollCall ? tpl.rollCall : tpl.safe
+        result.description = template
+          .replace('{courseName}', course.name)
+          .replace('{teacher}', course.teacher)
       }
 
       // 某些 UI 行为有额外效果（娱乐/睡觉/吃饭/打工/家教）
@@ -462,23 +450,26 @@ function gameReducer(state, action) {
       const nextDayCourses = state.courses.filter((c) => c.day === nextDay)
       const { plan, slotDecisions } = makeDefaultPlan(nextDayCourses)
 
+      const desc = settlement.description || `第 ${state.day} 天结算：你还活着，真是奇迹。`
+
       return {
         ...state,
         stats: nextStats,
         day: nextDay,
-        phase: PHASES.NIGHT,
+        phase: PHASES.SETTLEMENT,
+        settlementResult: desc,
         currentCourse: 0,
         moodSnapshots: moodSnapshot,
         coursePlan: plan,
         slotDecisions,
         dawnAction: 'normal_rest',
         usedEventIds: [],
-        history: [
-          settlement.description || `第 ${state.day} 天结算：你还活着，真是奇迹。`,
-          ...state.history,
-        ].slice(0, 8),
+        history: [desc, ...state.history].slice(0, 8),
       }
     }
+
+    case 'DISMISS_SETTLEMENT':
+      return { ...state, phase: PHASES.NIGHT, settlementResult: null }
 
     case 'ADD_HISTORY':
       return { ...state, history: [action.payload, ...state.history].slice(0, 8) }
@@ -550,6 +541,7 @@ export function GameProvider({ children }) {
     nextCourse: () => dispatch({ type: 'NEXT_COURSE' }),
     resolveEvent: (optionIndex) => dispatch({ type: 'RESOLVE_EVENT', payload: { optionIndex } }),
     settleDay: () => dispatch({ type: 'SETTLE_DAY' }),
+    dismissSettlement: () => dispatch({ type: 'DISMISS_SETTLEMENT' }),
   }), [])
 
   const value = useMemo(
