@@ -193,13 +193,18 @@ function PhoneFrame() {
                         className={`phone-course-block ${isSelected ? 'selected' : ''} ${isNow ? 'now' : ''} ${canEdit ? 'editable' : ''} ${course.isFree ? 'free-slot' : ''}`}
                         onClick={() => handleSelectCourse(course.id)}
                       >
-                        <button className="course-tile" style={{ background: course.isFree ? '#555' : (meta?.color || '#4a6fa5') }}>
+                        <button className="course-tile" style={{ background: meta?.color || (course.isFree ? '#555' : '#4a6fa5') }}>
                           <span>{course.name}</span>
                           <small>{course.teacher}</small>
                           <small>
                             {course.isFree ? '空闲时段' : `${course.type} · 点名${course.estimatedRollCall || '中'}`}
                           </small>
                         </button>
+                        <i
+                          className="course-decision-dot"
+                          style={{ background: meta?.color || '#666' }}
+                          title={meta?.label || decision}
+                        />
                         <time>{course.time}</time>
                       </article>
                     )
