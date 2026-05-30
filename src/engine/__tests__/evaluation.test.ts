@@ -7,7 +7,7 @@ describe('evaluate', () => {
   it('高数值返回 S 评级', () => {
     const state = createInitialState('normal')
     state.stats = { credits: 80, mood: 90, energy: 90, hunger: 90, entertainment: 90, money: 100, roommateFavor: 90 }
-    state.decisions = [{ courseActions: new Array(9).fill('attend'), dawnAction: 'normal_rest' }]
+    state.decisions = [{ courseActions: new Array(9).fill('attend'), freeActions: new Array(9).fill('rest'), dawnAction: 'normal_rest' }]
     const result = evaluate(state)
     expect(result.rating).toBe('S')
     expect(result.title.length).toBeGreaterThan(0)
@@ -19,6 +19,7 @@ describe('evaluate', () => {
     state.stats = { credits: 20, mood: 20, energy: 20, hunger: 20, entertainment: 20, money: 0, roommateFavor: 10 }
     state.decisions = new Array(7).fill(null).map((): DayDecision => ({
       courseActions: new Array(9).fill('skip'),
+      freeActions: new Array(9).fill('rest'),
       dawnAction: 'gaming',
     }))
     const result = evaluate(state)
@@ -29,7 +30,7 @@ describe('evaluate', () => {
     // 偏科学霸
     const stateA = createInitialState('normal')
     stateA.stats = { credits: 80, mood: 30, energy: 90, hunger: 90, entertainment: 70, money: 30, roommateFavor: 40 }
-    stateA.decisions = [{ courseActions: new Array(9).fill('attend'), dawnAction: 'normal_rest' }]
+    stateA.decisions = [{ courseActions: new Array(9).fill('attend'), freeActions: new Array(9).fill('rest'), dawnAction: 'normal_rest' }]
     const rA = evaluate(stateA)
     // 学分高但心情低 → 可能是苦行僧类
     expect(rA.title).toBeDefined()
@@ -37,7 +38,7 @@ describe('evaluate', () => {
     // 偏科搞钱
     const stateB = createInitialState('normal')
     stateB.stats = { credits: 40, mood: 60, energy: 50, hunger: 50, entertainment: 50, money: 90, roommateFavor: 50 }
-    stateB.decisions = [{ courseActions: new Array(9).fill('sub_for_other'), dawnAction: 'normal_rest' }]
+    stateB.decisions = [{ courseActions: new Array(9).fill('sub_for_other'), freeActions: new Array(9).fill('rest'), dawnAction: 'normal_rest' }]
     const rB = evaluate(stateB)
     expect(rB.title).toBeDefined()
     // 两个不同画像应给出不同称号

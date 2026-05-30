@@ -38,13 +38,13 @@ export function resolveEventOption(
 
 function buildTriggerCtx(state: GameState): Record<string, string | number> {
   const { stats, day, courseIndex, currentDecision } = state
-  const course = state.courses[day - 1]?.[courseIndex]
-  const action = course != null ? currentDecision?.courseActions[courseIndex] : undefined
+  const course = state.courses[day - 1]?.[courseIndex] ?? null
+  const action = course !== null ? currentDecision?.courseActions[courseIndex] : undefined
 
   return {
     action: action ?? '',
-    trait: course?.teacher.trait ?? '',
-    special: course?.teacher.special ?? '',
+    trait: course?.teacher?.trait ?? '',
+    special: course?.teacher?.special ?? '',
     credits: stats.credits,
     mood: stats.mood,
     money: stats.money,

@@ -10,9 +10,13 @@ export function evaluate(state: GameState): Evaluation {
 
   let totalSkips = 0
   let totalCourses = 0
-  for (const d of decisions) {
-    for (const a of d.courseActions) {
-      if (a === 'skip') totalSkips++
+  for (let day = 0; day < decisions.length; day++) {
+    const d = decisions[day]
+    const dayCourses = state.courses[day] ?? []
+    for (let i = 0; i < d.courseActions.length; i++) {
+      // 仅统计有课的时段
+      if (dayCourses[i] === null) continue
+      if (d.courseActions[i] === 'skip') totalSkips++
       totalCourses++
     }
   }

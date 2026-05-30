@@ -1,4 +1,4 @@
-import type { DawnAction, Difficulty, DifficultyConfig, PlayerStats, Thresholds } from './types'
+import type { DawnAction, Difficulty, DifficultyConfig, FreeAction, PlayerStats, Thresholds } from './types'
 
 // 9 节课时段
 export const TIME_SLOTS = [
@@ -19,6 +19,7 @@ export const DEFAULT_THRESHOLDS: Record<Difficulty, Thresholds> = {
 export const DIFFICULTY_CONFIGS: Record<Difficulty, DifficultyConfig> = {
   easy: {
     initialStats:      { credits: 10, mood: 80, energy: 80, hunger: 80, entertainment: 80, money: 30, roommateFavor: 60 },
+    courseDensity:      0.55,
     courseSeriousRatio: 0.3,
     rollCallBias:       -0.15,
     eventPositiveBias:  0.15,
@@ -26,6 +27,7 @@ export const DIFFICULTY_CONFIGS: Record<Difficulty, DifficultyConfig> = {
   },
   normal: {
     initialStats:      { credits: 5, mood: 65, energy: 65, hunger: 65, entertainment: 65, money: 15, roommateFavor: 40 },
+    courseDensity:      0.75,
     courseSeriousRatio: 0.5,
     rollCallBias:       0,
     eventPositiveBias:  0,
@@ -33,6 +35,7 @@ export const DIFFICULTY_CONFIGS: Record<Difficulty, DifficultyConfig> = {
   },
   hard: {
     initialStats:      { credits: 0, mood: 50, energy: 50, hunger: 50, entertainment: 50, money: 5, roommateFavor: 20 },
+    courseDensity:      1.0,
     courseSeriousRatio: 0.7,
     rollCallBias:       0.15,
     eventPositiveBias:  -0.15,
@@ -84,6 +87,14 @@ export const HIRE_SUB_EFFECT: PlayerStats = {
 }
 
 export const HIRE_SUB_RISK = 0.15
+
+// 空闲时段行为效果（不受 rewardMultiplier 影响）
+export const FREE_SLOT_EFFECTS: Record<FreeAction, PlayerStats> = {
+  self_study: { credits: 1, mood: 0, energy: -5,  hunger: -3, entertainment: -5,  money: 0, roommateFavor: 0 },
+  rest:       { credits: 0, mood: 0, energy: 20,  hunger: -3, entertainment: -2,  money: 0, roommateFavor: 0 },
+  eat:        { credits: 0, mood: 0, energy: 5,   hunger: 20, entertainment: 3,   money: 0, roommateFavor: 0 },
+  entertain:  { credits: 0, mood: 0, energy: -3,  hunger: -3, entertainment: 15,  money: 0, roommateFavor: 0 },
+}
 
 // go_out 凌晨行为的舍友好感度随机变化参数
 export const GO_OUT_ROOMMATE_DELTA = {

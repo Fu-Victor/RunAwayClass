@@ -1,8 +1,8 @@
-import type { Course, CourseAction, DawnAction, DifficultyConfig, PlayerStats, StatsDelta } from './types'
+import type { Course, CourseAction, DawnAction, DifficultyConfig, FreeAction, PlayerStats, StatsDelta } from './types'
 import {
   ATTEND_EFFECT, SKIP_EFFECT, SUB_FOR_OTHER_EFFECT,
   HIRE_SUB_EFFECT, HIRE_SUB_RISK, DAWN_EFFECTS,
-  GO_OUT_ROOMMATE_DELTA,
+  GO_OUT_ROOMMATE_DELTA, FREE_SLOT_EFFECTS,
 } from './constants'
 import { chance, pick } from './random'
 import { calcRollCallProb, checkRollCall } from './courseGen'
@@ -130,6 +130,15 @@ export function resolveDawnAction(action: DawnAction): {
     case 'normal_rest': desc = texts.normalRest; break
   }
 
+  return { deltas, description: desc }
+}
+
+export function resolveFreeSlotAction(action: FreeAction): {
+  deltas: StatsDelta
+  description: string
+} {
+  const deltas = { ...FREE_SLOT_EFFECTS[action] }
+  const desc = actionTexts.freeSlot[action]
   return { deltas, description: desc }
 }
 

@@ -49,6 +49,7 @@ export interface ActionTexts {
     goOut: string
     normalRest: string
   }
+  freeSlot: Record<string, string>
 }
 
 export interface SettlementTexts {

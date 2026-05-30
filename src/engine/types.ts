@@ -30,6 +30,8 @@ export type Difficulty = 'easy' | 'normal' | 'hard'
 
 export interface DifficultyConfig {
   initialStats: PlayerStats
+  // 9 个时段中有课程的比例，1.0 = 满课
+  courseDensity: number
   // 正课生成比例 0-1
   courseSeriousRatio: number
   // 点名概率全局偏移 -0.3 ~ +0.3
@@ -68,24 +70,29 @@ export interface Course {
 
 export type CourseAction = 'attend' | 'skip' | 'sub_for_other' | 'hire_sub'
 
+// 空闲时段的行为选择（无课程时）
+export type FreeAction = 'self_study' | 'rest' | 'eat' | 'entertain'
+
 export type DawnAction = 'sleep_early' | 'gaming' | 'cram' | 'go_out' | 'normal_rest'
 
-// 每日决策：9节课行为 + 次日凌晨行为
+// 每日决策：9 个时段的课程行为 + 空闲行为 + 次日凌晨行为
 export interface DayDecision {
   courseActions: CourseAction[]
+  freeActions: FreeAction[]
   dawnAction: DawnAction
 }
 
-// 工厂函数：确保 courseActions 长度 === TIME_SLOTS.length
+// 工厂函数：确保两个 actions 数组长度 === slotCount
 export function createDayDecision(
   courseActions: CourseAction[],
+  freeActions: FreeAction[],
   dawnAction: DawnAction,
   slotCount: number,
 ): DayDecision {
-  if (courseActions.length !== slotCount) {
-    throw new Error(`createDayDecision: expected ${slotCount} courseActions, got ${courseActions.length}`)
+  if (courseActions.length !== slotCount || freeActions.length !== slotCount) {
+    throw new Error(`createDayDecision: expected ${slotCount} actions, got c:${courseActions.length} f:${freeActions.length}`)
   }
-  return { courseActions, dawnAction }
+  return { courseActions, freeActions, dawnAction }
 }
 
 export interface EventOption {
@@ -99,7 +106,6 @@ export interface GameEvent {
   id: string
   phase: 'dawn' | 'course_break'
   // 触发条件表达式，由 events.ts 的 parseCondition 解析
-  // 支持的变量: action, trait, special, credits, mood, money, roommateFavor, skipRate
   condition: string
   title: string
   description: string
@@ -140,8 +146,8 @@ export interface GameState {
   thresholds: Thresholds
   difficulty: Difficulty
   difficultyConfig: DifficultyConfig
-  // [day][courseIndex]，7×9
-  courses: Course[][]
+  // [day][courseIndex]，7×9，null 表示空闲时段
+  courses: (Course | null)[][]
   decisions: DayDecision[]
   currentDecision: DayDecision | null
   activeEvent: GameEvent | null
@@ -151,6 +157,6 @@ export interface GameState {
   // 已触发事件 ID，同局不重复
   usedEventIds: string[]
   showWarning: boolean
-  // 累计旷课次数，用于点名概率计算
+  // 累计旷课次数，用于点名概率计算（仅统计有课程时的旷课）
   totalSkipCount: number
 }
