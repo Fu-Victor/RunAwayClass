@@ -91,7 +91,7 @@ export const HIRE_SUB_RISK = 0.20
 export const FREE_SLOT_EFFECTS: Record<FreeAction, PlayerStats> = {
   self_study: { credits: 1, mood: 0, energy: -5,  hunger: -2, entertainment: -4,  money: 0, roommateFavor: 0 },
   rest:       { credits: 0, mood: 0, energy: 10,  hunger: -2, entertainment: -1,  money: 0, roommateFavor: 0 },
-  eat:        { credits: 0, mood: 0, energy: 5,   hunger: 10, entertainment: 3,   money: -8, roommateFavor: 0 },
+  eat:        { credits: 0, mood: 0, energy: 5,   hunger: 10, entertainment: 3,   money: -4, roommateFavor: 0 },
   entertain:  { credits: 0, mood: 0, energy: -2,  hunger: -2, entertainment: 8,   money: 0, roommateFavor: 0 },
 }
 

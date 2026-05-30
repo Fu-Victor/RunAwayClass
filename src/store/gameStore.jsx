@@ -228,7 +228,7 @@ function gameReducer(state, action) {
       const uiExtras = {}
       if (uiActionKey === 'fun') uiExtras.entertainment = 8
       if (uiActionKey === 'sleep') uiExtras.energy = 8
-      if (uiActionKey === 'meal') { uiExtras.hunger = 10; uiExtras.money = -10 }
+      if (uiActionKey === 'meal') { uiExtras.hunger = 10; uiExtras.money = -5 }
       if (uiActionKey === 'work') uiExtras.money = 15
       if (uiActionKey === 'tutor') { uiExtras.credits = 1; uiExtras.money = 8 }
       for (const [k, v] of Object.entries(uiExtras)) { result.deltas[k] = (result.deltas[k] || 0) + v }
