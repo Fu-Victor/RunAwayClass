@@ -228,6 +228,34 @@ button {
   margin-bottom: 8px;
 }
 
+/* 新消息横幅 */
+.phone-banner {
+  position: absolute; top: 52px; left: 6px; right: 6px; z-index: 10;
+  background: rgba(30, 30, 30, 0.92); color: #fff;
+  padding: 10px 14px; border-radius: 12px; font-size: 12px;
+  display: flex; align-items: center; gap: 10px;
+  backdrop-filter: blur(8px);
+  animation: bannerSlideIn 0.35s ease-out, bannerFadeOut 0.3s 2.8s ease-in forwards;
+  pointer-events: none;
+}
+.banner-avatar {
+  width: 32px; height: 32px; border-radius: 8px;
+  background: rgba(255,255,255,0.15);
+  display: grid; place-items: center; font-weight: 800; font-size: 14px;
+  flex-shrink: 0;
+}
+.phone-banner strong { display: block; font-size: 13px; margin-bottom: 2px; }
+.phone-banner small { font-size: 11px; opacity: 0.85; }
+@keyframes bannerSlideIn { from { transform: translateY(-50px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+@keyframes bannerFadeOut { to { opacity: 0; transform: translateY(-24px); } }
+
+/* 微信角标 */
+.app-badge {
+  position: absolute; top: -6px; right: -6px;
+  width: 12px; height: 12px; border-radius: 50%;
+  background: #ff3b30; border: 1.5px solid #fff;
+}
+
 .phone-home {
   padding: 48px 18px 0;
   display: flex;
@@ -435,7 +463,7 @@ button {
 .schedule-period-row {
   display: grid;
   grid-template-columns: 40px 1fr;
-  min-height: 94px;
+  min-height: 105px;
   border-bottom: 0.5px solid var(--border-light);
   background: #ffffff;
 }
@@ -525,7 +553,7 @@ button {
 .phone-decision-bar {
   display: grid;
   gap: 4px;
-  padding: 6px 6px;
+  padding: 8px 8px;
   border-top: 0.5px solid var(--border);
   background: #fafafa;
 }
@@ -545,7 +573,7 @@ button {
 }
 
 .decision-btn {
-  min-height: 32px;
+  min-height: 36px;
   border: 0;
   border-radius: 4px;
   color: white;
@@ -594,15 +622,15 @@ button {
 
 .phone-submit-plan {
   justify-self: center;
-  width: 140px;
-  min-height: 36px;
+  width: 160px;
+  min-height: 44px;
   margin: 12px 0 22px;
   border: 0;
   border-radius: 4px;
   background: var(--green);
   color: #ffffff;
   font-weight: 700;
-  font-size: 14px;
+  font-size: 15px;
   transition: opacity 0.1s;
 }
 

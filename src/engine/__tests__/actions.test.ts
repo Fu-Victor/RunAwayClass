@@ -45,8 +45,9 @@ describe('resolveCourseAction', () => {
       timeSlotIndex: 3,
     }
     const r = resolveCourseAction('skip', safeCourse, baseStats, 0, config)
-    expect(r.deltas.energy).toBeGreaterThan(0)
-    expect(r.deltas.hunger).toBeGreaterThan(0)
+    expect(r.deltas.entertainment).toBeGreaterThan(0)
+    expect(r.deltas.hunger).toBeLessThan(0)
+    // 精力随机 [-2, +3]，不做确定性断言
     // 点名概率 15%，非确定性，不做触发断言
   })
 

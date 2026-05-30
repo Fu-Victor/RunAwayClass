@@ -61,6 +61,8 @@ export function resolveCourseAction(
 
     case 'skip':
       applyEffect(deltas, SKIP_EFFECT, mult)
+      // 精力随机波动 [-2, +3]（基础值，受难度倍率缩放）
+      add(deltas, 'energy', Math.round((Math.floor(Math.random() * 6) - 2) * mult))
       if (checkRollCall(calcRollCallProb(course, skipHistoryCount, config))) {
         flags.rollCall = true
         add(deltas, 'credits', -Math.round(3 * mult))

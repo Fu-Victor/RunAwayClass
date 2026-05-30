@@ -59,6 +59,32 @@ export const periodGroups = [
   { key: 'evening', label: '晚上', slots: [6, 7, 8], color: '#5a86ff' },
 ]
 
+// 手机消息池 — 每局随机抽取初始消息
+const BASE_MESSAGES = [
+  { from: '舍友群聊', text: '兄弟，下节课老师可能查人，床位先别焊死。' },
+  { from: '班级通知', text: '明早 8 点有课，请同学们带上身体和灵魂。' },
+  { from: '老师私信', text: '你上次作业的存在感，比我的发际线还稀薄。' },
+  { from: '舍友群聊', text: '今晚开黑不？就差你一个了，别又装死。' },
+  { from: '班级通知', text: '据可靠消息，明天上午可能有突击测验，懂的都懂。' },
+  { from: '神秘匿名', text: '我知道你上周三在哪。别问我是谁。' },
+  { from: '老师私信', text: '同学，你上次实验报告写了吗？截止日期是昨天。' },
+  { from: '舍友群聊', text: '刚看到辅导员在教学楼巡逻，各位好自为之。' },
+]
+
+// 事件 → 微信消息来源映射
+const EVENT_SOURCE = {
+  roll_call_crisis: '班级通知',
+  social_invite: '舍友群聊',
+  random_teacher_dm: '老师私信',
+  surprise_quiz: '班级通知',
+}
+const EVENT_SOURCE_DEFAULT = '系统通知'
+
+function pickRandomMessages(n) {
+  const shuffled = [...BASE_MESSAGES].sort(() => Math.random() - 0.5)
+  return shuffled.slice(0, n)
+}
+
 function clampStats(stats) {
   const r = { ...stats }
   for (const k of Object.keys(r)) {
@@ -198,6 +224,7 @@ const initialState = {
   phoneTab: 'home',
   moodSnapshots: [],
   eventMessage: null,
+  phoneMessages: [],
   result: null,
   lastActionResult: null,
   settlementResult: null,
@@ -223,6 +250,7 @@ function gameReducer(state, action) {
         courses: flatCourses,
         coursePlan: plan,
         slotDecisions,
+        phoneMessages: pickRandomMessages(3),
         day: 1,
         phase: PHASES.NIGHT,
         dawnAction: 'normal_rest',
@@ -258,6 +286,7 @@ function gameReducer(state, action) {
       const dawnPicked = tryTriggerEvent(dawnEligible)
       if (dawnPicked) {
         const resolvedDesc = resolveText(dawnPicked.description, state.dawnAction)
+        const newMsg = { from: '系统通知', text: `🌙 ${dawnPicked.title}` }
         return {
           ...state,
           stats: nextStats,
@@ -265,7 +294,8 @@ function gameReducer(state, action) {
           currentCourse: 0,
           currentEvent: { ...dawnPicked, description: resolvedDesc },
           usedEventIds: [...state.usedEventIds, dawnPicked.id],
-          eventMessage: { from: '系统通知', text: `🌙 ${dawnPicked.title}` },
+          eventMessage: newMsg,
+          phoneMessages: [newMsg, ...state.phoneMessages],
           history: [dawnResult.description, ...state.history].slice(0, 8),
         }
       }
@@ -379,15 +409,15 @@ function gameReducer(state, action) {
           description: resolveText(picked.description, engineAction),
         }
         // 根据事件来源生成手机消息
-        const msgFrom = picked.id.includes('random_teacher_dm') ? '老师私信'
-          : picked.id.includes('social_invite') ? '舍友群聊'
-          : picked.id.includes('surprise_quiz') || picked.id.includes('roll_call') ? '班级通知'
-          : '系统通知'
+        const sourceKey = Object.keys(EVENT_SOURCE).find((k) => picked.id.includes(k))
+        const msgFrom = EVENT_SOURCE[sourceKey] || EVENT_SOURCE_DEFAULT
+        const newMsg = { from: msgFrom, text: `📬 ${picked.title}` }
         return {
           ...cleared,
           currentEvent: resolvedEvent,
           usedEventIds: [...state.usedEventIds, picked.id],
-          eventMessage: { from: msgFrom, text: `📬 ${picked.title}` },
+          eventMessage: newMsg,
+          phoneMessages: [newMsg, ...state.phoneMessages],
         }
       }
 

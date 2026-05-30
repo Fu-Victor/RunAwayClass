@@ -73,7 +73,7 @@ export const ATTEND_EFFECT: PlayerStats = {
 
 // 旷课的基础收益 — 回血但不给学分
 export const SKIP_EFFECT: PlayerStats = {
-  credits: 0, mood: 0, energy: 6, hunger: 4, entertainment: 5, money: 0, roommateFavor: 0,
+  credits: 0, mood: 0, energy: 0, hunger: -4, entertainment: 5, money: 0, roommateFavor: 0,
 }
 
 // 帮人代课 — 拿钱但消耗更大

@@ -13,13 +13,6 @@ import {
 } from '../store/gameStore.jsx'
 import { statMeta, sidebarStats, getStatDescription, getStatLevel, getNightMindset, getThresholdAlerts } from '../utils/gameHelpers.js'
 
-// ==================== 静态数据 ====================
-const messages = [
-  { from: '舍友群聊', text: '兄弟，下节课老师可能查人，床位先别焊死。', unread: true },
-  { from: '班级通知', text: '明早 8 点有课，请同学们带上身体和灵魂。', unread: true },
-  { from: '老师私信', text: '你上次作业的存在感，比我的发际线还稀薄。', unread: false },
-]
-
 const statPercent = (value, max) => Math.min(100, Math.max(0, (value / max) * 100))
 
 // ==================== 右侧状态栏 ====================
@@ -82,7 +75,7 @@ function PhoneFrame() {
     phoneTab, setPhoneTab,
     todayCourses, coursesWithEstimate, currentCourse, phase, day,
     stats, coursePlan, setCoursePlan, dawnAction, setDawnAction, submitNight, difficultyConfig: dc, gameThresholds,
-    eventMessage,
+    eventMessage, phoneMessages,
   } = useGame()
 
   const [selectedCourseId, setSelectedCourseId] = useState(null)
@@ -129,31 +122,44 @@ function PhoneFrame() {
       <div className="phone-speaker" />
       <div className="phone-status"><span>9:41</span><span>5G 78%</span></div>
 
+      {/* 新消息横幅 */}
+      {eventMessage && (
+        <div className="phone-banner">
+          <span className="banner-avatar">{eventMessage.from.slice(0, 1)}</span>
+          <span>
+            <strong>{eventMessage.from}</strong>
+            <small>{eventMessage.text}</small>
+          </span>
+        </div>
+      )}
+
       {phoneTab === 'home' && (
         <div className="phone-home">
-          <button onClick={() => setPhoneTab('messages')} className="app-icon chat-app"><span />微信{messages.some((m) => m.unread && !readMessages.has(m.from)) && <b />}</button>
+          <button onClick={() => setPhoneTab('messages')} className="app-icon chat-app">
+            <span />微信
+            {eventMessage && <b className="app-badge" />}
+          </button>
           <button onClick={() => setPhoneTab('schedule')} className="app-icon schedule-app"><span />课表</button>
         </div>
       )}
 
       {phoneTab === 'messages' && !openedMessage && (() => {
-        const allMessages = eventMessage
-          ? [eventMessage, ...messages]
-          : messages
+        const msgs = phoneMessages.length > 0 ? phoneMessages : [{ from: '微信', text: '暂无消息' }]
         return (
           <div className="phone-page">
             <button className="phone-back" onClick={() => setPhoneTab('home')}>‹</button>
             <h2>微信</h2>
             <div className="message-list">
-              {allMessages.map((msg, idx) => {
-                const isEventMsg = eventMessage && idx === 0
-                const isUnread = (msg.unread || isEventMsg) && !readMessages.has(msg.from + idx)
+              {msgs.map((msg, idx) => {
+                const key = `${msg.from}-${idx}`
+                const isEventMsg = msg.text.startsWith('📬') || msg.text.startsWith('🌙')
+                const isUnread = !readMessages.has(key)
                 return (
                   <button
-                    key={msg.from + (isEventMsg ? '-event' : '')}
+                    key={key}
                     className={`message-item ${isEventMsg ? 'event-msg' : ''}`}
                     onClick={() => {
-                      setReadMessages((prev) => new Set([...prev, msg.from + idx]))
+                      setReadMessages((prev) => new Set([...prev, key]))
                       setOpenedMessage(msg)
                     }}
                   >
