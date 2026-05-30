@@ -67,17 +67,17 @@ export const ROLL_CALL_BASE = {
 
 // 老实上课
 export const ATTEND_EFFECT: PlayerStats = {
-  credits: 3, mood: 0, energy: -8, hunger: -6, entertainment: -3, money: 0, roommateFavor: 0,
+  credits: 3, mood: 0, energy: -5, hunger: -4, entertainment: -3, money: 0, roommateFavor: 0,
 }
 
 // 旷课
 export const SKIP_EFFECT: PlayerStats = {
-  credits: 0, mood: 0, energy: 0, hunger: -4, entertainment: 5, money: 0, roommateFavor: 0,
+  credits: 0, mood: 0, energy: 0, hunger: -2, entertainment: 5, money: 0, roommateFavor: 0,
 }
 
 // 帮人代课
 export const SUB_FOR_OTHER_EFFECT: PlayerStats = {
-  credits: 1, mood: -2, energy: -12, hunger: -6, entertainment: -5, money: 10, roommateFavor: 0,
+  credits: 1, mood: -2, energy: -7, hunger: -4, entertainment: -5, money: 10, roommateFavor: 0,
 }
 
 // 找人代课
@@ -89,10 +89,10 @@ export const HIRE_SUB_RISK = 0.20
 
 // 空闲时段（不受 rewardMultiplier 影响）
 export const FREE_SLOT_EFFECTS: Record<FreeAction, PlayerStats> = {
-  self_study: { credits: 1, mood: 0, energy: -5,  hunger: -2, entertainment: -4,  money: 0, roommateFavor: 0 },
-  rest:       { credits: 0, mood: 0, energy: 10,  hunger: -2, entertainment: -1,  money: 0, roommateFavor: 0 },
+  self_study: { credits: 1, mood: 0, energy: -3,  hunger: -1, entertainment: -4,  money: 0, roommateFavor: 0 },
+  rest:       { credits: 0, mood: 0, energy: 10,  hunger: -1, entertainment: -1,  money: 0, roommateFavor: 0 },
   eat:        { credits: 0, mood: 0, energy: 5,   hunger: 10, entertainment: 3,   money: -4, roommateFavor: 0 },
-  entertain:  { credits: 0, mood: 0, energy: -2,  hunger: -2, entertainment: 8,   money: 0, roommateFavor: 0 },
+  entertain:  { credits: 0, mood: 0, energy: -1,  hunger: -1, entertainment: 8,   money: 0, roommateFavor: 0 },
 }
 
 // go_out 凌晨行为的舍友好感度随机变化
@@ -104,14 +104,14 @@ export const GO_OUT_ROOMMATE_DELTA = {
 
 // 凌晨行为
 export const DAWN_EFFECTS: Record<DawnAction, PlayerStats> = {
-  sleep_early: { credits: 0, mood: 3,  energy: 15,  hunger: -2, entertainment: -4,  money: 0,   roommateFavor: 5 },
-  gaming:      { credits: 0, mood: 3,  energy: -20, hunger: -4, entertainment: 13,  money: 0,   roommateFavor: -10 },
-  cram:        { credits: 3, mood: -2, energy: -25, hunger: -2, entertainment: -6,  money: 0,   roommateFavor: 0 },
-  go_out:      { credits: 0, mood: 5,  energy: -11, hunger: 5,  entertainment: 10,  money: -20, roommateFavor: 0 },
-  normal_rest: { credits: 0, mood: 1,  energy: 5,   hunger: -2, entertainment: 0,   money: 0,   roommateFavor: 2 },
+  sleep_early: { credits: 0, mood: 3,  energy: 15,  hunger: -1, entertainment: -4,  money: 0,   roommateFavor: 5 },
+  gaming:      { credits: 0, mood: 3,  energy: -12, hunger: -2, entertainment: 13,  money: 0,   roommateFavor: -10 },
+  cram:        { credits: 3, mood: -2, energy: -15, hunger: -1, entertainment: -6,  money: 0,   roommateFavor: 0 },
+  go_out:      { credits: 0, mood: 5,  energy: -7,  hunger: 5,  entertainment: 10,  money: -20, roommateFavor: 0 },
+  normal_rest: { credits: 0, mood: 1,  energy: 5,   hunger: -1, entertainment: 0,   money: 0,   roommateFavor: 2 },
 }
 
 // 每日自然消耗
 export const DAILY_DECAY: PlayerStats = {
-  credits: 0, mood: 0, energy: -5, hunger: -10, entertainment: -8, money: 0, roommateFavor: 0,
+  credits: 0, mood: 0, energy: -3, hunger: -6, entertainment: -8, money: 0, roommateFavor: 0,
 }
