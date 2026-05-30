@@ -1,0 +1,306 @@
+/* 游戏容器 */
+.game-container {
+  width: 100%;
+  min-height: 100vh;
+   background: rgba(255,255,255,0.95);
+  position: relative;
+  padding: 0px;
+}
+
+/* 状态栏 */
+.status-bar {
+  width: 20vw;
+  min-width: 280px;
+  height: auto;
+  background: linear-gradient(135deg, rgba(255,255,255,0.95) 0%, rgba(255,255,255,0.98) 100%);
+  position: absolute;
+  right: 2vh;
+  top: 9vh;
+  border-radius: 20px;
+  padding: 20px;
+  box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255,255,255,0.3);
+  animation: slideIn 0.5s ease-out;
+  z-index: 100;
+}
+
+@keyframes slideIn {
+  from {
+    opacity: 0;
+    transform: translateX(50px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+/* 标题 */
+.status-title {
+  text-align: center;
+  color: #333;
+  margin-bottom: 0px;
+  font-size: 1.25rem;
+  font-weight: bold;
+  position: relative;
+}
+
+.status-title::after {
+  content: '';
+  display: block;
+  width: 50px;
+  height: 3px;
+  background: linear-gradient(90deg, #667eea, #764ba2);
+  margin: 0px auto 0;
+  border-radius: 3px;
+}
+
+/* 主要状态区域 */
+.stats-primary {
+  margin-bottom: 15px;
+}
+
+/* 次要状态区域 */
+.stats-secondary {
+  margin-top: 10px;
+}
+
+/* 分隔线 */
+.stat-divider {
+  height: 2px;
+  background: linear-gradient(90deg, transparent, #ddd, transparent);
+  margin: 15px 0;
+}
+
+/* 单个状态项 */
+.stat-item {
+  margin-bottom: 10px;
+  animation: fadeInUp 0.3s ease-out;
+}
+
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* 状态标签 */
+.stat-label {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 2px;
+  font-size: 0.85rem;
+  color: #555;
+  font-weight: 500;
+}
+
+.stat-icon {
+  font-size: 1rem;
+}
+
+.stat-value {
+  margin-left: auto;
+  font-weight: bold;
+  color: #667eea;
+}
+
+/* 血条容器 */
+.stat-bar-container {
+  width: 100%;
+  height: 24px;
+  background: #e0e0e0;
+  border-radius: 12px;
+  overflow: hidden;
+  position: relative;
+  box-shadow: inset 0 1px 3px rgba(0,0,0,0.2);
+}
+
+/* 血条 */
+.stat-bar {
+  height: 100%;
+  border-radius: 12px;
+  transition: width 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+  position: relative;
+  overflow: hidden;
+  box-shadow: 0 0 5px rgba(0,0,0,0.1);
+}
+
+/* 血条发光效果 */
+.stat-bar-glow {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(90deg, 
+    transparent 0%, 
+    rgba(255,255,255,0.3) 50%, 
+    transparent 100%);
+  animation: shimmer 2s infinite;
+}
+
+@keyframes shimmer {
+  0% {
+    transform: translateX(-100%);
+  }
+  100% {
+    transform: translateX(100%);
+  }
+}
+
+/* 学分条 - 金色 */
+.credit-bar {
+  background: linear-gradient(90deg, #ffd89b, #c7e9fb);
+  background: linear-gradient(90deg, #f6d365, #fda085);
+}
+
+/* 心情条 - 粉色 */
+.mood-bar {
+  background: linear-gradient(90deg, #ff9a9e, #fecfef);
+}
+
+/* 金钱条 - 绿色 */
+.money-bar {
+  background: linear-gradient(90deg, #a8edea, #fed6e3);
+  background: linear-gradient(90deg, #84fab0, #8fd3f4);
+}
+
+/* 休息条 - 蓝色 */
+.rest-bar {
+  background: linear-gradient(90deg, #a1c4fd, #c2e9fb);
+}
+
+/* 饮食条 - 橙色 */
+.hunger-bar {
+  background: linear-gradient(90deg, #ffecd2, #fcb69f);
+}
+
+/* 娱乐条 - 紫色 */
+.entertainment-bar {
+  background: linear-gradient(90deg, #d4c4f7, #b8a9e8);
+}
+
+/* 根据血条百分比改变颜色 */
+.stat-bar[style*="width: 100%"] {
+  background: linear-gradient(90deg, #4caf50, #8bc34a);
+}
+
+.stat-bar[style*="width: 70%"] {
+  background: linear-gradient(90deg, #2196f3, #4caf50);
+}
+
+.stat-bar[style*="width: 50%"] {
+  background: linear-gradient(90deg, #ff9800, #ffc107);
+}
+
+.stat-bar[style*="width: 30%"] {
+  background: linear-gradient(90deg, #f44336, #ff5722);
+}
+
+.stat-bar[style*="width: 10%"] {
+  background: linear-gradient(90deg, #9c27b0, #e91e63);
+  animation: warning 0.5s infinite;
+}
+
+@keyframes warning {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.7;
+  }
+}
+
+/* 状态描述 */
+.stat-description {
+  font-size: 0.7rem;
+  color: #999;
+  margin-top: 3px;
+  padding-left: 5px;
+}
+
+/* 操作按钮区域 */
+.status-actions {
+  display: flex;
+  gap: 10px;
+  margin-top: 0px;
+  justify-content: center;
+}
+
+.action-btn {
+  padding: 6px 12px;
+  background: linear-gradient(135deg, #667eea, #764ba2);
+  color: white;
+  border: none;
+  border-radius: 20px;
+  cursor: pointer;
+  font-size: 0.8rem;
+  font-weight: 500;
+  transition: all 0.3s ease;
+  flex: 1;
+}
+
+.action-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+}
+
+.action-btn:active {
+  transform: translateY(0);
+}
+
+/* 游戏主区域 */
+.game-area {
+  margin-left: 20px;
+  padding: 20px;
+  color: white;
+}
+
+.game-area h2 {
+  margin-bottom: 20px;
+}
+
+/* 响应式设计 */
+@media (max-width: 768px) {
+  .status-bar {
+    width: 90vw;
+    right: 5vw;
+    top: 10vh;
+    position: relative;
+    margin: 0 auto 20px;
+  }
+  
+  .game-container {
+    padding: 10px;
+  }
+  
+  .game-area {
+    margin-left: 0;
+  }
+}
+
+/* 滚动条美化 */
+.status-bar::-webkit-scrollbar {
+  width: 6px;
+}
+
+.status-bar::-webkit-scrollbar-track {
+  background: #f1f1f1;
+  border-radius: 10px;
+}
+
+.status-bar::-webkit-scrollbar-thumb {
+  background: #888;
+  border-radius: 10px;
+}
+
+.status-bar::-webkit-scrollbar-thumb:hover {
+  background: #555;
+}
