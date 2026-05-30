@@ -6,31 +6,35 @@
 import { DEFAULT_THRESHOLDS } from '../engine/constants'
 import { feedbackTexts } from '../content/loader'
 
-// ==================== 数值元数据 ====================
+// ==================== 数值元数据（工厂函数，按难度动态生成阈值标记） ====================
 
-const t = DEFAULT_THRESHOLDS.normal
+export function getStatMeta(thresholds) {
+  const t = thresholds || DEFAULT_THRESHOLDS.normal
+  return [
+    {
+      key: 'credits', label: '学分', icon: '📚', max: 100, tone: 'credit', order: 1,
+      thresholds: [
+        { value: t.tutorCredits, label: '师', color: '#55c47c' },
+        { value: t.warningCredits, label: '警', color: '#ca4b3f' },
+      ],
+    },
+    { key: 'mood', label: '心情', icon: '😊', max: 100, tone: 'mood', order: 2,
+      thresholds: [{ value: 60, label: '优', color: '#55c47c' }, { value: 20, label: '危', color: '#ca4b3f' }] },
+    { key: 'energy', label: '精力', icon: '⚡', max: 100, tone: 'rest', order: 3,
+      thresholds: [{ value: 60, label: '优', color: '#55c47c' }, { value: 25, label: '危', color: '#ca4b3f' }] },
+    { key: 'hunger', label: '饱腹', icon: '🍕', max: 100, tone: 'hunger', order: 4,
+      thresholds: [{ value: 60, label: '优', color: '#55c47c' }, { value: 25, label: '危', color: '#ca4b3f' }] },
+    { key: 'entertainment', label: '娱乐', icon: '🎮', max: 100, tone: 'fun', order: 5,
+      thresholds: [{ value: 60, label: '优', color: '#55c47c' }, { value: 25, label: '危', color: '#ca4b3f' }] },
+    { key: 'money', label: '金钱', icon: '💰', max: 999, tone: 'money', order: 6, isCurrency: true,
+      thresholds: [{ value: 80, label: '富', color: '#f5c84c' }, { value: 25, label: '穷', color: '#ca4b3f' }] },
+    { key: 'roommateFavor', label: '舍友', icon: '🤝', max: 100, tone: 'roommate', order: 7,
+      thresholds: [{ value: 60, label: '优', color: '#55c47c' }, { value: 25, label: '危', color: '#ca4b3f' }] },
+  ]
+}
 
-export const statMeta = [
-  {
-    key: 'credits', label: '学分', icon: '📚', max: 100, tone: 'credit', order: 1,
-    thresholds: [
-      { value: t.tutorCredits, label: '师', color: '#55c47c' },
-      { value: t.warningCredits, label: '警', color: '#ca4b3f' },
-    ],
-  },
-  { key: 'mood', label: '心情', icon: '😊', max: 100, tone: 'mood', order: 2,
-    thresholds: [{ value: 60, label: '优', color: '#55c47c' }, { value: 20, label: '危', color: '#ca4b3f' }] },
-  { key: 'energy', label: '精力', icon: '⚡', max: 100, tone: 'rest', order: 3,
-    thresholds: [{ value: 60, label: '优', color: '#55c47c' }, { value: 25, label: '危', color: '#ca4b3f' }] },
-  { key: 'hunger', label: '饱腹', icon: '🍕', max: 100, tone: 'hunger', order: 4,
-    thresholds: [{ value: 60, label: '优', color: '#55c47c' }, { value: 25, label: '危', color: '#ca4b3f' }] },
-  { key: 'entertainment', label: '娱乐', icon: '🎮', max: 100, tone: 'fun', order: 5,
-    thresholds: [{ value: 60, label: '优', color: '#55c47c' }, { value: 25, label: '危', color: '#ca4b3f' }] },
-  { key: 'money', label: '金钱', icon: '💰', max: 999, tone: 'money', order: 6, isCurrency: true,
-    thresholds: [{ value: 80, label: '富', color: '#f5c84c' }, { value: 25, label: '穷', color: '#ca4b3f' }] },
-  { key: 'roommateFavor', label: '舍友', icon: '🤝', max: 100, tone: 'roommate', order: 7,
-    thresholds: [{ value: 60, label: '优', color: '#55c47c' }, { value: 25, label: '危', color: '#ca4b3f' }] },
-]
+// 静态导出兼容非 GameProvider 场景（如菜单预览）
+export const statMeta = getStatMeta(DEFAULT_THRESHOLDS.normal)
 
 export const topBarStats = ['credits', 'mood', 'energy', 'hunger', 'entertainment']
 export const sidebarStats = ['credits', 'mood', 'energy', 'hunger', 'entertainment', 'money', 'roommateFavor']

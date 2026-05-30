@@ -84,6 +84,7 @@ export function resolveCourseAction(
 
     case 'hire_sub':
       applyEffect(deltas, HIRE_SUB_EFFECT, mult)
+      deltas.money = HIRE_SUB_EFFECT.money
       if (chance(HIRE_SUB_RISK)) {
         flags.hireFail = true
         add(deltas, 'credits', -Math.round(3 * mult))
