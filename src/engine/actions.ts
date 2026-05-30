@@ -69,7 +69,7 @@ export function resolveCourseAction(
         try {
           desc = pick(actionTexts.skip.successPool)
         } catch {
-          desc = '你翘课了，啥也没发生。'
+          desc = actionTexts.skip.fallback
         }
       }
       break

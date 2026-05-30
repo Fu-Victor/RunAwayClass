@@ -1,6 +1,6 @@
 # 结算评价体系。评级 S~D，每级有多个称号候选。
 # condition 字段为匹配条件，引擎会解析并依次匹配，第一个满足的即选中。
-# 支持的变量: credits, mood, money, roommateFavor, skipRate
+# 支持的变量: credits, mood, energy, hunger, entertainment, money, roommateFavor, skipRate
 # 支持的运算符: >=, >, <=, <, ==, and, or
 # "default" 表示无条件兜底
 

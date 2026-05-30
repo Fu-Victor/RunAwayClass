@@ -12,6 +12,8 @@ export interface ActionTexts {
   skip: {
     rollCall: string
     successPool: string[]
+    // successPool 为空时使用的兜底文案
+    fallback: string
   }
   subForOther: {
     main: string

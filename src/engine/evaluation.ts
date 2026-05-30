@@ -1,6 +1,7 @@
 import type { Evaluation, GameState, Rating } from './types'
 import type { EvaluationTexts } from '../content/types'
 import { evaluationTexts } from '../content/loader'
+import { evalCondition } from './conditionEval'
 
 export function evaluate(state: GameState): Evaluation {
   const { stats, decisions, thresholds } = state
@@ -80,50 +81,4 @@ export function evaluateFailure(stats: GameState['stats'], texts: EvaluationText
     return { rating: 'D', title: texts.failureLowCredits.title, comment: texts.failureLowCredits.comment }
   }
   return { rating: 'D', title: texts.failureHighCredits.title, comment: texts.failureHighCredits.comment }
-}
-
-// 条件求值器 — 与 events.ts 共用同一套 DSL
-// 支持: >=, <=, >, <, ==, !=, and, or, 'default'
-function evalCondition(expr: string, ctx: Record<string, number>): boolean {
-  if (expr === 'default') return true
-  if (!expr || expr.trim() === '') return false
-
-  const orParts = expr.split(/\s+or\s+/)
-  for (const part of orParts) {
-    if (evalAnd(part.trim(), ctx)) return true
-  }
-  return false
-}
-
-function evalAnd(expr: string, ctx: Record<string, number>): boolean {
-  const parts = expr.split(/\s+and\s+/)
-  for (const part of parts) {
-    if (!evalCompare(part.trim(), ctx)) return false
-  }
-  return true
-}
-
-function evalCompare(expr: string, ctx: Record<string, number>): boolean {
-  const match = expr.match(/^(\w+)\s*(>=|<=|!=|==|>|<)\s*([\d.]+)$/)
-  if (!match) {
-    console.warn(`[evalCondition] invalid expression: "${expr}"`)
-    return false
-  }
-  const [, key, op, valStr] = match
-  const a = ctx[key]
-  if (a === undefined) {
-    console.warn(`[evalCondition] unknown variable: "${key}" in "${expr}"`)
-    return false
-  }
-  const b = parseFloat(valStr)
-  if (isNaN(b)) return false
-  switch (op) {
-    case '>=': return a >= b
-    case '<=': return a <= b
-    case '>':  return a > b
-    case '<':  return a < b
-    case '==': return a === b
-    case '!=': return a !== b
-    default:   return false
-  }
 }
