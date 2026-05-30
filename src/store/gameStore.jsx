@@ -8,6 +8,7 @@ import { settleDay, applyDeltas } from '../engine/settlement'
 import { evaluate, evaluateFailure } from '../engine/evaluation'
 import { finalizeCourses, getEstimatedProbLabel } from '../engine/courseGen'
 import { eventPool, courseNames, teacherNames, actionTexts } from '../content/loader'
+import { getStatMeta } from '../utils/gameHelpers'
 
 export const PHASES = { MENU: 'menu', DIFFICULTY: 'difficulty', NIGHT: 'night', DAY: 'day', SETTLEMENT: 'settlement', RESULT: 'result' }
 export const SCREENS = { MENU: 'menu', DIFFICULTY: 'difficulty', HISTORY: 'history', TITLES: 'titles', CREDITS: 'credits', GAME: 'game' }
@@ -339,11 +340,6 @@ function gameReducer(state, action) {
         result = resolveCourseAction(engineActionKey, engineCourse, state.stats, state.skipCount, config)
       }
 
-      // 找人代课的花费不受难度倍率影响（倍率导致简单反而更贵）
-      if (uiActionKey === 'hire_sub') {
-        result.deltas.money = HIRE_SUB_EFFECT.money
-      }
-
       // UI 层特有行为：用 YAML 文案替代 engine 的 skip 通用描述
       if (actionTexts.uiActions[uiActionKey]) {
         const tpl = actionTexts.uiActions[uiActionKey]
@@ -584,6 +580,11 @@ export function GameProvider({ children }) {
     })
   }, [todayCourses, state.skipCount, state.difficulty])
 
+  const statMeta = useMemo(
+    () => getStatMeta(getThresholds(state.difficulty)),
+    [state.difficulty],
+  )
+
   const actions = useMemo(() => ({
     startGame: (d) => dispatch({ type: 'START_GAME', payload: d }),
     setScreen: (s) => dispatch({ type: 'SET_SCREEN', payload: s }),
@@ -610,6 +611,7 @@ export function GameProvider({ children }) {
       isGameOver,
       isCleared,
       ...actions,
+      statMeta,
       gameThresholds: {
         creditPass: getThresholds(state.difficulty).passCredits,
         creditWarning: getThresholds(state.difficulty).warningCredits,
@@ -618,7 +620,7 @@ export function GameProvider({ children }) {
       },
       difficultyConfig: DIFFICULTY_CONFIGS[state.difficulty] || DIFFICULTY_CONFIGS.normal,
     }),
-    [state, todayCourses, coursesWithEstimate, currentCourse, isGameOver, isCleared, actions],
+    [state, todayCourses, coursesWithEstimate, currentCourse, isGameOver, isCleared, actions, statMeta],
   )
 
   return <GameContext.Provider value={value}>{children}</GameContext.Provider>

@@ -11,13 +11,13 @@ import {
   periodGroups,
   HIRE_COST,
 } from '../store/gameStore.jsx'
-import { statMeta, sidebarStats, getStatDescription, getStatLevel, getNightMindset, getThresholdAlerts } from '../utils/gameHelpers.js'
+import { sidebarStats, getStatDescription, getStatLevel, getNightMindset, getThresholdAlerts } from '../utils/gameHelpers.js'
 
 const statPercent = (value, max) => Math.min(100, Math.max(0, (value / max) * 100))
 
 // ==================== 右侧状态栏 ====================
 function SideStatus() {
-  const { stats } = useGame()
+  const { stats, statMeta } = useGame()
   return (
     <aside className="side-status">
       <h2>状态栏</h2>
