@@ -9,7 +9,7 @@ import {
   PHASES,
   SCREENS,
 } from '../store/gameStore.jsx'
-import { statMeta, topBarStats, sidebarStats } from '../data/statMeta.js'
+import { statMeta, sidebarStats } from '../data/statMeta.js'
 import { getStatDescription, getStatLevel, getNightMindset, getClassResultText, thresholdAlerts, getDailySettlementText } from '../data/textPools.js'
 import { periodGroups } from '../data/courses.js'
 
@@ -22,31 +22,7 @@ const messages = [
 
 const statPercent = (value, max) => Math.min(100, Math.max(0, (value / max) * 100))
 
-// ==================== 顶部/右侧 ====================
-function TopMeter() {
-  const { stats } = useGame()
-  return (
-    <header className="top-meter">
-      {topBarStats.map((key) => {
-        const meta = statMeta.find((m) => m.key === key)
-        if (!meta) return null
-        const value = stats[key] || 0
-        const pct = statPercent(value, meta.max)
-        const level = getStatLevel(key, value)
-        return (
-          <div key={key} className={`meter ${meta.tone} ${level === 'danger' || level === 'critical' ? 'low' : ''}`}>
-            <span>{meta.label}</span>
-            <div className="meter-track">
-              <i style={{ width: `${pct}%` }} />
-              <b style={{ left: `${Math.min(96, Math.max(4, pct))}%` }} />
-            </div>
-          </div>
-        )
-      })}
-    </header>
-  )
-}
-
+// ==================== 右侧状态栏 ====================
 function SideStatus() {
   const { stats } = useGame()
   return (
@@ -64,7 +40,20 @@ function SideStatus() {
             <div key={key} className={`status-item ${level}`}>
               <span>{meta.label}</span>
               <strong>{meta.isCurrency ? `¥${value}` : value}</strong>
-              <div><i style={{ width: `${pct}%` }} /></div>
+              <div className="status-bar-wrap">
+                <i className="status-bar-fill" style={{ width: `${pct}%` }} />
+                {meta.thresholds?.map((t) => {
+                  const tPct = (t.value / meta.max) * 100
+                  return (
+                    <span
+                      key={t.value}
+                      className="threshold-arrow"
+                      style={{ left: `${Math.min(98, Math.max(2, tPct))}%`, borderTopColor: t.color }}
+                      title={`${t.label}：${meta.isCurrency ? '¥' : ''}${t.value}`}
+                    />
+                  )
+                })}
+              </div>
               <small>{desc}</small>
             </div>
           )
@@ -89,12 +78,12 @@ function ThresholdAlerts() {
 // ==================== 左侧手机 ====================
 const decisionMeta = [
   { key: 'attend', label: '上课', color: '#79b8f5' },
-  { key: 'skip', label: '旷课', color: '#f06db7' },
   { key: 'fun', label: '娱乐', color: '#ffd772' },
   { key: 'sleep', label: '睡觉', color: '#9b61f5' },
+  { key: 'meal', label: '吃饭', color: '#ff9f67' },
   { key: 'substitute', label: '代课', color: '#61e5e6' },
   { key: 'work', label: '打工', color: '#83d77a' },
-  { key: 'tutor', label: '家教', color: '#ffa36b' },
+  { key: 'tutor', label: '家教', color: '#f06db7' },
 ]
 
 function PhoneFrame() {
@@ -217,7 +206,6 @@ function PhoneFrame() {
                           <small>{course.teacher}</small>
                           <small>{course.type} · {course.credit}分</small>
                         </button>
-                        <i className="course-decision-dot" style={{ background: meta?.color }} title={meta?.label} />
                         <time>{course.time}</time>
                       </article>
                     )
@@ -318,12 +306,12 @@ function DayPhaseCenter() {
   const { currentCourse: course, coursePlan, stats, advanceCourse, incrementCounter } = useGame()
   const actionKey = coursePlan[course?.id] || 'attend'
   const labelMap = {
-    attend: '上课', skip: '旷课', fun: '娱乐', sleep: '睡觉',
+    attend: '上课', fun: '娱乐', sleep: '睡觉', meal: '吃饭',
     substitute: '代课', work: '打工', tutor: '家教',
   }
   const actionLabel = labelMap[actionKey] || '上课'
 
-  const isSkipping = ['skip', 'fun', 'sleep', 'work', 'tutor', 'substitute'].includes(actionKey)
+  const isSkipping = ['fun', 'sleep', 'meal', 'work', 'tutor', 'substitute'].includes(actionKey)
 
   const handleAdvance = () => {
     const moodBonus = stats.mood >= 80 ? 1 : stats.mood < 35 ? -1 : 0
@@ -351,6 +339,9 @@ function DayPhaseCenter() {
         } else if (actionKey === 'sleep') {
           delta.energy = 8
           text = `你在${course.name}课上睡着了，${course.teacher}叫醒你时全班都在笑。`
+        } else if (actionKey === 'meal') {
+          delta.fullness = 12; delta.money = -12
+          text = `你在食堂吃着饭，班群消息：${course.teacher}点名了。`
         } else if (actionKey === 'work') {
           delta.money = 15; delta.energy = -14
           text = `打工回来发现${course.teacher}点名了，血亏。`
@@ -361,9 +352,8 @@ function DayPhaseCenter() {
           delta.money = 20; delta.energy = -18
           text = `你帮人代课却错过了自己的课，${course.teacher}记了你一笔。`
         } else {
-          // skip
-          delta.energy = 10; delta.entertainment = 8; delta.fullness = -4
-          text = `你旷了《${course.name}》，${course.teacher}点名了，快乐瞬间打折。`
+          delta.credit = -6; delta.mood = -2
+          text = `你没去上《${course.name}》，${course.teacher}点名了。`
         }
       } else {
         // 没被抓
@@ -373,6 +363,9 @@ function DayPhaseCenter() {
         } else if (actionKey === 'sleep') {
           delta = { energy: 22, entertainment: -2, fullness: -4, mood: 3 }
           text = `你美美睡了一觉，精力回满，神清气爽。`
+        } else if (actionKey === 'meal') {
+          delta = { fullness: 22, energy: -4, entertainment: 4, mood: 5, money: -12 }
+          text = `你去食堂大快朵颐，肚子饱了，心情好了。`
         } else if (actionKey === 'work') {
           delta = { money: 30, energy: -22, fullness: -8, entertainment: -4, mood: -2 }
           text = `你用上课时间打工，赚了 ¥30，但疲惫不堪。`
@@ -383,7 +376,7 @@ function DayPhaseCenter() {
           delta = { money: gameThresholds.substituteEarn, credit: 1, energy: -18, fullness: -8, mood: -1 }
           text = getClassResultText('substitute')
         } else {
-          delta = { energy: 16, entertainment: 10, fullness: -6, mood: 5 }
+          delta = { entertainment: 10, energy: 14, fullness: -4, mood: 3 }
           text = getClassResultText('skip')
         }
       }
@@ -519,8 +512,7 @@ function GameBoard() {
   return (
     <div className={`game-shell ${stats.mood < 20 ? 'danger-mood' : ''}`}>
       <PhoneFrame />
-      <main className="control-board">
-        <TopMeter />
+      <main className="control-board no-top-meter">
         <section className="stage">
           <div className="dorm-visual" aria-hidden="true">
             <div className="window-view" />
