@@ -58,60 +58,60 @@ export const STAT_MIN: Record<keyof PlayerStats, number> = {
 export const ROLL_CALL_BASE = {
   teacherLover:      0.6,
   teacherHater:      0.15,
-  // 正课额外加成
   courseSeriousBonus: 0.1,
-  // 早八时段加成
   earlyMorningBonus: 0.1,
-  // 每多旷课一次累加
   skipHistoryBonus:  0.05,
 } as const
 
-// 老实上课的基础收益（最终受 rewardMultiplier 缩放）
+// 学分 +40% · 负增益 -30%
+
+// 老实上课
 export const ATTEND_EFFECT: PlayerStats = {
-  credits: 2, mood: 0, energy: -11, hunger: -8, entertainment: -4, money: 0, roommateFavor: 0,
+  credits: 3, mood: 0, energy: -8, hunger: -6, entertainment: -3, money: 0, roommateFavor: 0,
 }
 
-// 旷课的基础收益 — 回血但不给学分
+// 旷课
 export const SKIP_EFFECT: PlayerStats = {
   credits: 0, mood: 0, energy: 6, hunger: 4, entertainment: 5, money: 0, roommateFavor: 0,
 }
 
-// 帮人代课 — 拿钱但消耗更大
+// 帮人代课
 export const SUB_FOR_OTHER_EFFECT: PlayerStats = {
-  credits: 1, mood: -3, energy: -17, hunger: -8, entertainment: -7, money: 10, roommateFavor: 0,
+  credits: 1, mood: -2, energy: -12, hunger: -6, entertainment: -5, money: 10, roommateFavor: 0,
 }
 
-// 找人代课 — 基础效果（风险叠加在 actions.ts 中处理）
+// 找人代课
 export const HIRE_SUB_EFFECT: PlayerStats = {
-  credits: 0, mood: 0, energy: 0, hunger: 0, entertainment: 0, money: -35, roommateFavor: 0,
+  credits: 0, mood: 0, energy: 0, hunger: 0, entertainment: 0, money: -25, roommateFavor: 0,
 }
 
 export const HIRE_SUB_RISK = 0.20
 
-// 空闲时段行为效果（不受 rewardMultiplier 影响）
+// 空闲时段（不受 rewardMultiplier 影响）
 export const FREE_SLOT_EFFECTS: Record<FreeAction, PlayerStats> = {
-  self_study: { credits: 1, mood: 0, energy: -7,  hunger: -3, entertainment: -5,  money: 0, roommateFavor: 0 },
-  rest:       { credits: 0, mood: 0, energy: 10,  hunger: -3, entertainment: -2,  money: 0, roommateFavor: 0 },
-  eat:        { credits: 0, mood: 0, energy: 5,   hunger: 10, entertainment: 3,   money: 0, roommateFavor: 0 },
-  entertain:  { credits: 0, mood: 0, energy: -3,  hunger: -3, entertainment: 8,   money: 0, roommateFavor: 0 },
+  self_study: { credits: 1, mood: 0, energy: -5,  hunger: -2, entertainment: -4,  money: 0, roommateFavor: 0 },
+  rest:       { credits: 0, mood: 0, energy: 10,  hunger: -2, entertainment: -1,  money: 0, roommateFavor: 0 },
+  eat:        { credits: 0, mood: 0, energy: 5,   hunger: 10, entertainment: 3,   money: -8, roommateFavor: 0 },
+  entertain:  { credits: 0, mood: 0, energy: -2,  hunger: -2, entertainment: 8,   money: 0, roommateFavor: 0 },
 }
 
-// go_out 凌晨行为的舍友好感度随机变化参数
+// go_out 凌晨行为的舍友好感度随机变化
 export const GO_OUT_ROOMMATE_DELTA = {
-  positive: 7,
-  negative: -7,
+  positive: 5,
+  negative: -5,
   threshold: 0.5,
 } as const
 
+// 凌晨行为
 export const DAWN_EFFECTS: Record<DawnAction, PlayerStats> = {
-  sleep_early: { credits: 0, mood: 3,  energy: 15,  hunger: -3, entertainment: -5,  money: 0,   roommateFavor: 5 },
-  gaming:      { credits: 0, mood: 3,  energy: -28, hunger: -5, entertainment: 13,  money: 0,   roommateFavor: -14 },
-  cram:        { credits: 2, mood: -3, energy: -35, hunger: -3, entertainment: -8,  money: 0,   roommateFavor: 0 },
-  go_out:      { credits: 0, mood: 5,  energy: -15, hunger: 5,  entertainment: 10,  money: -28, roommateFavor: 0 },
-  normal_rest: { credits: 0, mood: 1,  energy: 5,   hunger: -3, entertainment: 0,   money: 0,   roommateFavor: 2 },
+  sleep_early: { credits: 0, mood: 3,  energy: 15,  hunger: -2, entertainment: -4,  money: 0,   roommateFavor: 5 },
+  gaming:      { credits: 0, mood: 3,  energy: -20, hunger: -4, entertainment: 13,  money: 0,   roommateFavor: -10 },
+  cram:        { credits: 3, mood: -2, energy: -25, hunger: -2, entertainment: -6,  money: 0,   roommateFavor: 0 },
+  go_out:      { credits: 0, mood: 5,  energy: -11, hunger: 5,  entertainment: 10,  money: -20, roommateFavor: 0 },
+  normal_rest: { credits: 0, mood: 1,  energy: 5,   hunger: -2, entertainment: 0,   money: 0,   roommateFavor: 2 },
 }
 
-// 每日自然消耗，在结算时叠加
+// 每日自然消耗
 export const DAILY_DECAY: PlayerStats = {
-  credits: 0, mood: 0, energy: -7, hunger: -14, entertainment: -11, money: 0, roommateFavor: 0,
+  credits: 0, mood: 0, energy: -5, hunger: -10, entertainment: -8, money: 0, roommateFavor: 0,
 }

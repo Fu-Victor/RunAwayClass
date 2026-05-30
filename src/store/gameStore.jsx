@@ -27,11 +27,11 @@ export const COURSE_ACTIONS = [
 ]
 
 export const NIGHT_ACTIONS = [
-  { key: 'sleep', label: '早睡养生', delta: { energy: 22, mood: 4, roommate: 5, entertainment: -4 } },
-  { key: 'game', label: '熬夜打游戏', delta: { entertainment: 24, energy: -18, mood: 5, roommate: -8 } },
-  { key: 'homework', label: '通宵赶作业', delta: { credit: 5, energy: -24, mood: -6 } },
-  { key: 'hangout', label: '出去浪', delta: { entertainment: 18, mood: 10, money: -25, energy: -8 } },
-  { key: 'normal', label: '正常休息', delta: { energy: 10, fullness: -4, entertainment: 2, mood: 2 } },
+  { key: 'sleep', label: '早睡养生', delta: { energy: 22, mood: 4, roommate: 5, entertainment: -3 } },
+  { key: 'game', label: '熬夜打游戏', delta: { entertainment: 24, energy: -13, mood: 5, roommate: -6 } },
+  { key: 'homework', label: '通宵赶作业', delta: { credit: 7, energy: -17, mood: -4 } },
+  { key: 'hangout', label: '出去浪', delta: { entertainment: 18, mood: 10, money: -18, energy: -6 } },
+  { key: 'normal', label: '正常休息', delta: { energy: 10, fullness: -3, entertainment: 2, mood: 2 } },
 ]
 
 // ==================== 工具函数 ====================

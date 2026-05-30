@@ -1,6 +1,6 @@
 # 事件池：游戏中所有随机触发的事件
-# effects 只写非零值即可
-# description 和 flavorText 支持按 action 分叉：string | Record<string, string>
+# effects 只写非零值即可 · 学分 +40% · 负增益 -30%
+# description 和 flavorText 支持按 action 分叉
 
 - id: "roll_call_crisis_1"
   phase: "course_break"
@@ -10,16 +10,16 @@
   options:
     - text: "🏃 飞奔回教室"
       effects:
-        energy: -14
+        energy: -10
       flavorText: "你以百米冲刺速度跑回教室，在老师点到你名字的前一秒推开了门。有惊无险。"
     - text: "🤷 不管了"
       effects:
-        credits: -6
-        mood: -4
+        credits: -4
+        mood: -3
       flavorText: "你选择了摆烂。老师记下了你的名字，发出意味深长的冷笑。"
     - text: "📱 叫舍友喊到"
       effects:
-        roommateFavor: -11
+        roommateFavor: -8
       flavorText: "舍友捏着嗓子帮你喊了\"到\"。你欠舍友一个人情。"
 
 - id: "class_quiz_1"
@@ -31,7 +31,7 @@
     - text: "💪 自信作答"
       effects:
         credits: 1
-        energy: -4
+        energy: -3
       flavorText: "你临场发挥居然蒙对了！老师满意地点点头。"
     - text: "🙈 低头装死"
       effects:
@@ -48,11 +48,11 @@
       effects:
         hunger: 8
         mood: 4
-        money: -11
+        money: -8
       flavorText: "红烧肉真香！和舍友边吃边吐槽老师，心情大好。"
     - text: "😐 算了下次吧"
       effects:
-        roommateFavor: -7
+        roommateFavor: -5
       flavorText: "舍友回了一个\"好吧\"的表情包。"
 
 - id: "random_teacher_dm_1"
@@ -63,13 +63,13 @@
   options:
     - text: "📝 立马补交"
       effects:
-        energy: -14
+        energy: -10
         credits: 1
       flavorText: "你熬夜肝完了作业。老师回了个\"收到\"。"
     - text: "👻 装没看见"
       effects:
-        credits: -3
-        mood: -3
+        credits: -2
+        mood: -2
       flavorText: "你装作没看到，但每次打开微信都心惊胆战。"
 
 - id: "random_windfall_1"
@@ -104,15 +104,15 @@
   options:
     - text: "📖 狂补笔记"
       effects:
-        energy: -17
-        credits: 2
+        energy: -12
+        credits: 3
       flavorText:
         attend: "你借学霸笔记疯狂抄了一中午。至少没交白卷。"
         skip: "你让舍友拍照发来笔记，在宿舍狂补。至少没交白卷。"
         default: "你到处借笔记疯狂补课。至少没交白卷。"
     - text: "🎲 相信自己"
       effects:
-        credits: -4
+        credits: -3
       flavorText:
         attend: "你自信满满走进考场……发现自己连题目都看不懂。"
         skip: "你从宿舍狂奔到考场……发现自己连题目都看不懂。"
@@ -127,7 +127,7 @@
     - text: "🎧 戴耳机继续"
       effects:
         entertainment: 5
-        roommateFavor: -21
+        roommateFavor: -15
         mood: 1
       flavorText: "你戴上耳机继续战斗。舍友的怨气已实体化。"
     - text: "😴 乖乖关机"
@@ -144,12 +144,12 @@
   options:
     - text: "🎵 打开网抑云"
       effects:
-        entertainment: -7
-        mood: -11
+        entertainment: -5
+        mood: -8
       flavorText: "越听越难受。今晚注定是个不眠之夜。"
     - text: "🍜 点夜宵"
       effects:
-        money: -21
+        money: -15
         hunger: 5
         mood: 3
       flavorText: "热气腾腾的夜宵下肚，人生还是有意义的。"
@@ -162,7 +162,7 @@
   options:
     - text: "🍕 果断下单"
       effects:
-        money: -28
+        money: -20
         hunger: 8
         mood: 4
       flavorText: "深夜碳水，治愈一切。"

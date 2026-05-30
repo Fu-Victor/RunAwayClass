@@ -90,13 +90,13 @@ export const gameThresholds = {
   // 心情阈值
   moodCrash: 5,        // 崩溃值 - 心情 ≤ 此值时触发游戏失败
 
-  // 数值衰减
-  baseEnergyDrain: 8,      // 上课基础精力消耗
-  baseFullnessDrain: 6,    // 上课基础饱腹消耗
-  baseEntertainmentDrain: 4, // 上课基础娱乐消耗
+  // 数值衰减（-30%）
+  baseEnergyDrain: 6,      // 上课基础精力消耗
+  baseFullnessDrain: 4,    // 上课基础饱腹消耗
+  baseEntertainmentDrain: 3, // 上课基础娱乐消耗
 
   // 代课费用
   substituteEarn: 35,    // 帮人代课收入
-  outsourceCost: 45,     // 找人代课花费
+  outsourceCost: 32,     // 找人代课花费（-30%）
   outsourceFailChance: 0.2, // 找人代课被坑概率
 }

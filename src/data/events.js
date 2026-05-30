@@ -1,11 +1,9 @@
 /**
- * 随机事件系统
- * 后续可替换为后端 API（返回事件池及触发条件）
+ * 随机事件系统 · 学分 +40% · 负增益 -30%
  */
 
-// === 事件定义 ===
 export const eventPool = [
-  // 点名危机 - 老师爱点名 + 玩家旷课
+  // 点名危机
   {
     id: 'roll_call_crisis',
     type: 'roll_call_crisis',
@@ -19,17 +17,17 @@ export const eventPool = [
     options: [
       {
         label: '飞奔回教室',
-        delta: { energy: -10, credit: 2, mood: -1 },
+        delta: { energy: -7, credit: 3, mood: -1 },
         text: '你像被查寝追着跑，气喘吁吁卡点坐下，老师白了你一眼。',
       },
       {
         label: '让舍友帮忙喊到',
-        delta: { roommate: -12, credit: -1 },
+        delta: { roommate: -8, credit: -1 },
         text: '舍友的演技一般，但义气尚可。老师半信半疑地勾上了你的名字。',
       },
       {
         label: '爱咋咋地，不去了',
-        delta: { credit: -7, mood: 3, entertainment: 6 },
+        delta: { credit: -5, mood: 3, entertainment: 6 },
         text: '自由是自由了，教务系统里你的名字也自由地飘红了。',
       },
     ],
@@ -43,62 +41,38 @@ export const eventPool = [
     options: [
       {
         label: '飞速打车回学校',
-        delta: { money: -20, energy: -8, credit: 1 },
+        delta: { money: -14, energy: -6, credit: 1 },
         text: '你花了二十块钱从校外飞回来，堪称年度最快折返跑。',
       },
       {
         label: '让兄弟顶一下',
-        delta: { roommate: -15, credit: -2 },
-        text: '兄弟嘴上说着"最后一次"，还是帮你签了。但脸色不太好看。',
+        delta: { credit: -2, mood: -1, roommate: -4 },
+        text: '"就说我去医务室了！"——兄弟回了个 OK，但你的良心隐约作痛。',
+      },
+      {
+        label: '躺平，认命',
+        delta: { credit: -6, mood: 1, entertainment: 4 },
+        text: '你认命了。反正教务处迟早会打电话，今天先快乐。',
       },
     ],
   },
 
-  // 课堂提问 - 玩家在上课 + 老师随机点名
-  {
-    id: 'class_quiz',
-    type: 'class_quiz',
-    title: '课堂突袭提问',
-    body: '老师推了推眼镜，露出诡异的微笑："这位同学，你来回答一下刚才讲的内容。"全班目光聚焦于你。',
-    condition: (ctx) => {
-      const todayPlan = ctx.todayPlan || {}
-      return Object.values(todayPlan).some((a) => a === 'attend')
-    },
-    options: [
-      {
-        label: '自信作答（管它对不对）',
-        delta: { credit: 2, mood: 2, energy: -2 },
-        text: '你凭借过人的瞎编能力，成功糊弄了过去。老师居然点了点头。',
-      },
-      {
-        label: '低头装死',
-        delta: { credit: -2, mood: -2 },
-        text: '你把头埋进课本假装隐身。但课本拿反了，全班笑出声。',
-      },
-      {
-        label: '反问老师一个更难的问题',
-        delta: { credit: 1, energy: -3, mood: 4 },
-        text: '"老师，您刚才说的第三点，跟昨天讲的矛盾了吧？" ——老师陷入了沉思，你赢得了尊重。',
-      },
-    ],
-  },
-
-  // 社交邀约 - 舍友好感度较高
+  // 社交邀约
   {
     id: 'social_invite',
     type: 'social_invite',
     title: '食堂邀约',
     body: '舍友发来微信："下课去食堂整点？今天窗口阿姨手没抖，红烧肉分量贼足！"',
-    condition: (ctx) => ctx.stats?.roommate >= 45,
+    condition: (ctx) => ctx.stats?.roommate >= 40,
     options: [
       {
         label: '必须去！',
-        delta: { fullness: 18, mood: 5, money: -12, roommate: 5 },
-        text: '你吃到了热乎的饭，也吃到了转瞬即逝的人间烟火。舍友还帮你多打了半勺。',
+        delta: { fullness: 18, mood: 5, money: -8, roommate: 5 },
+        text: '你吃到了本学期最好的一顿食堂。阿姨甚至还多给了半勺。',
       },
       {
         label: '婉拒，我要学习',
-        delta: { roommate: -7, credit: 1, mood: -1 },
+        delta: { roommate: -5, credit: 1, mood: -1 },
         text: '你打开课件，关掉社交。学分微微上涨，但宿舍关系微微下跌。',
       },
     ],
@@ -112,18 +86,18 @@ export const eventPool = [
     options: [
       {
         label: '走起！',
-        delta: { fullness: 15, entertainment: 12, mood: 6, money: -20, energy: -10, roommate: 8 },
+        delta: { fullness: 15, entertainment: 12, mood: 6, money: -14, energy: -7, roommate: 8 },
         text: '凌晨一点，你们在烧烤摊上讨论人生、游戏、和明天早八的课怎么逃。',
       },
       {
         label: '太晚了，睡觉',
-        delta: { energy: 5, roommate: -4 },
+        delta: { energy: 5, roommate: -3 },
         text: '你翻了个身继续睡。舍友嘟囔了一句"没劲"独自出门。',
       },
     ],
   },
 
-  // 老师私信 - 随机触发
+  // 老师私信
   {
     id: 'teacher_message',
     type: 'teacher_message',
@@ -133,7 +107,7 @@ export const eventPool = [
     options: [
       {
         label: '立马补交一份',
-        delta: { energy: -10, credit: 2, mood: -2 },
+        delta: { energy: -7, credit: 3, mood: -1 },
         text: '你连夜赶了一份，第二天颤颤巍巍发过去。老师回了个👍。',
       },
       {
@@ -143,20 +117,20 @@ export const eventPool = [
       },
       {
         label: '装没看见',
-        delta: { credit: -4, mood: 0 },
+        delta: { credit: -3, mood: 0 },
         text: '你选择性失明了。三天后，成绩系统里多了一条扣分记录。',
       },
     ],
   },
 
-  // 天降横财 - 随机低概率
+  // 天降横财
   {
     id: 'windfall',
     type: 'windfall',
     title: '天降横财',
     body: '你走在校园路上，脚下突然踢到一个东西——是一张皱巴巴的 ¥50 钞票！周围无人注意。',
     condition: () => true,
-    weight: 0.3, // 30% 权重（低概率）
+    weight: 0.3,
     options: [
       {
         label: '揣兜里，今晚加鸡腿',
@@ -185,12 +159,12 @@ export const eventPool = [
     options: [
       {
         label: '借舍友笔记狂补',
-        delta: { energy: -12, credit: 3, roommate: -3 },
+        delta: { energy: -8, credit: 4, roommate: -2 },
         text: '你用三十分钟狂翻舍友笔记，勉强记住了几个公式。测验时至少没交白卷。',
       },
       {
         label: '相信自己，裸考上阵',
-        delta: { credit: -5, mood: -3 },
+        delta: { credit: -4, mood: -2 },
         text: '你交了一张只写了名字的卷子。老师收卷时的眼神，你终生难忘。',
       },
     ],
@@ -206,7 +180,7 @@ export const eventPool = [
     options: [
       {
         label: '翘课去拿快递',
-        delta: { entertainment: 8, mood: 5, credit: -2, energy: -3 },
+        delta: { entertainment: 8, mood: 5, credit: -1, energy: -2 },
         text: '你拆开了三个快递，里面是零食、新鞋、和一件永远也不会穿的衣服。快乐。',
       },
       {
@@ -238,7 +212,7 @@ export const eventPool = [
     ],
   },
 
-  // 图书馆占座风波
+  // 图书馆占座
   {
     id: 'library_seat',
     type: 'random',
@@ -248,43 +222,32 @@ export const eventPool = [
     options: [
       {
         label: '把书挪开，自己坐下',
-        delta: { credit: 2, energy: -4, mood: 1 },
+        delta: { credit: 3, energy: -3, mood: 1 },
         text: '你坐在了靠窗的位置。后来那人回来了，瞪了你一眼，但没敢说什么。',
       },
       {
         label: '算了，回宿舍学',
-        delta: { energy: -2, entertainment: 4 },
+        delta: { energy: -1, entertainment: 4 },
         text: '你回到宿舍，打开课本。十分钟后，你已经躺在床上刷手机了。',
       },
     ],
   },
 ]
 
-/**
- * 根据当前游戏上下文选择可触发的事件
- * @param {Object} ctx - { stats, todayPlan, day, skipCount, difficulty }
- * @returns {Array} 候选事件列表
- */
 export function selectAvailableEvents(ctx) {
   return eventPool.filter((e) => {
-    if (!e.condition(ctx)) return false
+    if (e.condition && !e.condition(ctx)) return false
     return true
   })
 }
 
-/**
- * 从候选事件中随机选择一个（考虑权重）
- * @param {Array} events
- * @returns {Object|null}
- */
-export function pickRandomEvent(events) {
-  if (events.length === 0) return null
-
-  // 按权重扩展
-  const weighted = events.flatMap((e) => {
-    const w = e.weight ?? 1
-    return Array(Math.round(w * 10)).fill(e)
-  })
-
-  return weighted[Math.floor(Math.random() * weighted.length)]
+export function pickRandomEvent(available) {
+  if (available.length === 0) return null
+  const totalWeight = available.reduce((sum, e) => sum + (e.weight || 1), 0)
+  let r = Math.random() * totalWeight
+  for (const e of available) {
+    r -= (e.weight || 1)
+    if (r <= 0) return e
+  }
+  return available[available.length - 1]
 }

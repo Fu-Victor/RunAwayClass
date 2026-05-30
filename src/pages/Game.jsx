@@ -92,9 +92,10 @@ const decisionMeta = [
   { key: 'skip', label: '旷课', color: '#f06db7' },
   { key: 'fun', label: '娱乐', color: '#ffd772' },
   { key: 'sleep', label: '睡觉', color: '#9b61f5' },
+  { key: 'meal', label: '吃饭', color: '#ffa36b' },
   { key: 'substitute', label: '代课', color: '#61e5e6' },
   { key: 'work', label: '打工', color: '#83d77a' },
-  { key: 'tutor', label: '家教', color: '#ffa36b' },
+  { key: 'tutor', label: '家教', color: '#fbbf24' },
 ]
 
 function PhoneFrame() {
@@ -318,12 +319,12 @@ function DayPhaseCenter() {
   const { currentCourse: course, coursePlan, stats, advanceCourse, incrementCounter } = useGame()
   const actionKey = coursePlan[course?.id] || 'attend'
   const labelMap = {
-    attend: '上课', skip: '旷课', fun: '娱乐', sleep: '睡觉',
+    attend: '上课', skip: '旷课', fun: '娱乐', sleep: '睡觉', meal: '吃饭',
     substitute: '代课', work: '打工', tutor: '家教',
   }
   const actionLabel = labelMap[actionKey] || '上课'
 
-  const isSkipping = ['skip', 'fun', 'sleep', 'work', 'tutor', 'substitute'].includes(actionKey)
+  const isSkipping = ['skip', 'fun', 'sleep', 'meal', 'work', 'tutor', 'substitute'].includes(actionKey)
 
   const handleAdvance = () => {
     const moodBonus = stats.mood >= 80 ? 1 : stats.mood < 35 ? -1 : 0
@@ -343,47 +344,53 @@ function DayPhaseCenter() {
     } else {
       incrementCounter('skipCount')
       if (caught) {
-        // 点名被抓，额外扣学分
-        delta = { credit: -6, mood: -2, fullness: -4 }
+        // 点名被抓，额外扣学分（-30%）
+        delta = { credit: -4, mood: -1, fullness: -3 }
         if (actionKey === 'fun') {
-          delta.entertainment = 10; delta.energy = -4
+          delta.entertainment = 10; delta.energy = -3
           text = `你在${course.name}课上玩手机，${course.teacher}把你揪了出来。`
         } else if (actionKey === 'sleep') {
           delta.energy = 8
           text = `你在${course.name}课上睡着了，${course.teacher}叫醒你时全班都在笑。`
+        } else if (actionKey === 'meal') {
+          delta.fullness = 10; delta.money = -12
+          text = `你在食堂大快朵颐时${course.teacher}点名了，嘴里还嚼着红烧肉。`
         } else if (actionKey === 'work') {
-          delta.money = 15; delta.energy = -14
+          delta.money = 15; delta.energy = -10
           text = `打工回来发现${course.teacher}点名了，血亏。`
         } else if (actionKey === 'tutor') {
-          delta.money = 15; delta.credit = -2; delta.energy = -18
+          delta.money = 15; delta.credit = -1; delta.energy = -13
           text = `家教去了，但${course.teacher}点名了，两头不讨好。`
         } else if (actionKey === 'substitute') {
-          delta.money = 20; delta.energy = -18
+          delta.money = 20; delta.energy = -13
           text = `你帮人代课却错过了自己的课，${course.teacher}记了你一笔。`
         } else {
           // skip
-          delta.energy = 10; delta.entertainment = 8; delta.fullness = -4
+          delta.energy = 10; delta.entertainment = 8; delta.fullness = -3
           text = `你旷了《${course.name}》，${course.teacher}点名了，快乐瞬间打折。`
         }
       } else {
-        // 没被抓
+        // 没被抓（负增益 -30%）
         if (actionKey === 'fun') {
-          delta = { entertainment: 22, energy: -6, fullness: -5, mood: 6 }
+          delta = { entertainment: 22, energy: -4, fullness: -4, mood: 6 }
           text = `你在${course.name}时段尽情娱乐，快乐指数飙升！`
         } else if (actionKey === 'sleep') {
-          delta = { energy: 22, entertainment: -2, fullness: -4, mood: 3 }
+          delta = { energy: 22, entertainment: -1, fullness: -3, mood: 3 }
           text = `你美美睡了一觉，精力回满，神清气爽。`
+        } else if (actionKey === 'meal') {
+          delta = { fullness: 16, energy: 5, money: -10, mood: 5 }
+          text = `你去食堂搓了一顿，肚子饱了心情好了。钱包瘦了。`
         } else if (actionKey === 'work') {
-          delta = { money: 30, energy: -22, fullness: -8, entertainment: -4, mood: -2 }
+          delta = { money: 30, energy: -15, fullness: -6, entertainment: -3, mood: -1 }
           text = `你用上课时间打工，赚了 ¥30，但疲惫不堪。`
         } else if (actionKey === 'tutor') {
-          delta = { money: 25, credit: 2, energy: -20, fullness: -6, mood: -1 }
+          delta = { money: 25, credit: 3, energy: -14, fullness: -4, mood: -1 }
           text = `你给学弟学妹做家教，赚了 ¥25，还巩固了知识。`
         } else if (actionKey === 'substitute') {
-          delta = { money: gameThresholds.substituteEarn, credit: 1, energy: -18, fullness: -8, mood: -1 }
+          delta = { money: gameThresholds.substituteEarn, credit: 1, energy: -13, fullness: -6, mood: -1 }
           text = getClassResultText('substitute')
         } else {
-          delta = { energy: 16, entertainment: 10, fullness: -6, mood: 5 }
+          delta = { energy: 16, entertainment: 10, fullness: -4, mood: 5 }
           text = getClassResultText('skip')
         }
       }
