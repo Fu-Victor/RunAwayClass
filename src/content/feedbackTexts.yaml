@@ -3,61 +3,61 @@
 
 mood:
   - range: "80-100"
-    text:  "[TODO] 心情 80-100 的描述"
+    text:  "心情起飞，看谁都顺眼"
     level: 0
   - range: "50-79"
-    text:  "[TODO] 心情 50-79 的描述"
+    text:  "还行，不悲不喜，主打一个佛"
     level: 1
   - range: "20-49"
-    text:  "[TODO] 心情 20-49 的描述"
+    text:  "有点 emo，PPT 都像在讽刺你"
     level: 2
   - range: "5-19"
-    text:  "[TODO] 心情 5-19 的描述"
+    text:  "绷不住了，随时可能哭出来"
     level: 3
   - range: "0-4"
-    text:  "[TODO] 心情 0-4 的描述"
+    text:  "已黑化，生人勿近"
     level: 4
 
 energy:
   - range: "70-100"
-    text:  "[TODO] 精力 70-100 的描述"
+    text:  "精神抖擞，再来两节都不困"
     level: 0
   - range: "40-69"
-    text:  "[TODO] 精力 40-69 的描述"
+    text:  "有点困，靠意志力续着"
     level: 1
   - range: "15-39"
-    text:  "[TODO] 精力 15-39 的描述"
+    text:  "眼皮打架，PPT 开始重影了"
     level: 2
   - range: "0-14"
-    text:  "[TODO] 精力 0-14 的描述"
+    text:  "再不睡可能当场关机"
     level: 3
 
 hunger:
   - range: "70-100"
-    text:  "[TODO] 饱腹 70-100 的描述"
+    text:  "肚子饱饱，有种淡淡的幸福"
     level: 0
   - range: "40-69"
-    text:  "[TODO] 饱腹 40-69 的描述"
+    text:  "有点饿，开始盘算下课吃啥"
     level: 1
   - range: "15-39"
-    text:  "[TODO] 饱腹 15-39 的描述"
+    text:  "肚子在叫，场面一度很尴尬"
     level: 2
   - range: "0-14"
-    text:  "[TODO] 饱腹 0-14 的描述"
+    text:  "饿出幻觉，书上的字像饼干"
     level: 3
 
 entertainment:
   - range: "70-100"
-    text:  "[TODO] 娱乐 70-100 的描述"
+    text:  "精神富足，手机电量也满格"
     level: 0
   - range: "40-69"
-    text:  "[TODO] 娱乐 40-69 的描述"
+    text:  "有点无聊，靠刷手机凑合过"
     level: 1
   - range: "15-39"
-    text:  "[TODO] 娱乐 15-39 的描述"
+    text:  "无聊透了，开始数天花板格子"
     level: 2
   - range: "0-14"
-    text:  "[TODO] 娱乐 0-14 的描述"
+    text:  "精神枯竭，大脑已进入待机"
     level: 3
 
 # ========================
