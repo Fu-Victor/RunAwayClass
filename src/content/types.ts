@@ -1,5 +1,22 @@
 // content 配置的类型定义，供 loader 和消费者使用
 
+export type CourseNames = string[]
+
+export type TeacherNames = Record<'roll_call_lover' | 'roll_call_hater', string[]>
+
+export interface FeedbackEntry {
+  range: string
+  text: string
+  level: number
+}
+
+export interface FeedbackTexts {
+  mood: FeedbackEntry[]
+  energy: FeedbackEntry[]
+  hunger: FeedbackEntry[]
+  entertainment: FeedbackEntry[]
+}
+
 export interface ActionTexts {
   attend: {
     moodHigh: string
