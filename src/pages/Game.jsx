@@ -82,6 +82,7 @@ function PhoneFrame() {
     phoneTab, setPhoneTab,
     todayCourses, coursesWithEstimate, currentCourse, phase, day,
     stats, coursePlan, setCoursePlan, dawnAction, setDawnAction, submitNight, difficultyConfig: dc, gameThresholds,
+    eventMessage,
   } = useGame()
 
   const [selectedCourseId, setSelectedCourseId] = useState(null)
@@ -135,31 +136,37 @@ function PhoneFrame() {
         </div>
       )}
 
-      {phoneTab === 'messages' && !openedMessage && (
-        <div className="phone-page">
-          <button className="phone-back" onClick={() => setPhoneTab('home')}>‹</button>
-          <h2>微信</h2>
-          <div className="message-list">
-            {messages.map((msg) => {
-              const isUnread = msg.unread && !readMessages.has(msg.from)
-              return (
-                <button
-                  key={msg.from}
-                  className="message-item"
-                  onClick={() => {
-                    setReadMessages((prev) => new Set([...prev, msg.from]))
-                    setOpenedMessage(msg)
-                  }}
-                >
-                  <span className="avatar">{msg.from.slice(0, 1)}</span>
-                  <span><strong>{msg.from}</strong><small>{msg.text}</small></span>
-                  {isUnread && <i />}
-                </button>
-              )
-            })}
+      {phoneTab === 'messages' && !openedMessage && (() => {
+        const allMessages = eventMessage
+          ? [eventMessage, ...messages]
+          : messages
+        return (
+          <div className="phone-page">
+            <button className="phone-back" onClick={() => setPhoneTab('home')}>‹</button>
+            <h2>微信</h2>
+            <div className="message-list">
+              {allMessages.map((msg, idx) => {
+                const isEventMsg = eventMessage && idx === 0
+                const isUnread = (msg.unread || isEventMsg) && !readMessages.has(msg.from + idx)
+                return (
+                  <button
+                    key={msg.from + (isEventMsg ? '-event' : '')}
+                    className={`message-item ${isEventMsg ? 'event-msg' : ''}`}
+                    onClick={() => {
+                      setReadMessages((prev) => new Set([...prev, msg.from + idx]))
+                      setOpenedMessage(msg)
+                    }}
+                  >
+                    <span className="avatar">{msg.from.slice(0, 1)}</span>
+                    <span><strong>{msg.from}</strong><small>{msg.text}</small></span>
+                    {isUnread && <i />}
+                  </button>
+                )
+              })}
+            </div>
           </div>
-        </div>
-      )}
+        )
+      })()}
 
       {phoneTab === 'messages' && openedMessage && (
         <div className="phone-page">
@@ -250,7 +257,15 @@ function PhoneFrame() {
                     const alreadyHire = coursePlan[selectedCourse.id] === 'hire_sub'
                     const overBudget = d.key === 'hire_sub' && !alreadyHire && totalHireCost + HIRE_COST > stats.money
                     const tutorLocked = d.key === 'tutor' && stats.credits < gameThresholds.creditTutor
-                    const disabled = (d.key === 'hire_sub' && stats.money < HIRE_COST) || overBudget || tutorLocked
+                    const hirePoor = d.key === 'hire_sub' && stats.money < HIRE_COST
+                    const disabled = hirePoor || overBudget || tutorLocked
+                    const reason = tutorLocked
+                      ? `需学分 ≥ ${gameThresholds.creditTutor} 解锁家教`
+                      : overBudget
+                        ? `余额不足：还需 ¥${totalHireCost + HIRE_COST - stats.money}`
+                        : hirePoor
+                          ? `余额不足：代课费 ¥${HIRE_COST}`
+                          : ''
                     return (
                       <button
                         key={d.key}
@@ -258,6 +273,7 @@ function PhoneFrame() {
                         className="decision-btn"
                         style={{ background: d.color, opacity: disabled ? 0.3 : 1 }}
                         onClick={() => applyDecision(d.key)}
+                        title={reason || undefined}
                       >
                         {d.label}
                         {d.key === 'hire_sub' ? ` ¥${HIRE_COST}` : ''}
@@ -297,12 +313,31 @@ function PhoneFrame() {
 // ==================== 中央区域 ====================
 function BottomConsole() {
   const { history, stats, gameThresholds } = useGame()
+  const [expanded, setExpanded] = useState(false)
   const buff = stats.credits >= gameThresholds.creditTutor ? '学神光环' : '暂无'
   const debuff = stats.mood < 25 ? '生无可恋' : stats.energy < 25 ? '困成标本' : stats.hunger < 15 ? '胃在抗议' : '暂无'
+  const recentLogs = history.slice(0, 5)
+
   return (
     <footer className="bottom-console">
       <div className="buff-column"><strong>buff</strong><span>{buff}</span><strong>debuff</strong><span>{debuff}</span></div>
-      <div className="log-panel"><p>{history[0]}</p></div>
+      <div
+        className={`log-panel ${expanded ? 'log-expanded' : ''}`}
+        onClick={() => setExpanded((v) => !v)}
+        title={expanded ? '点击收起' : '点击展开历史'}
+        role="button"
+        tabIndex={0}
+      >
+        {expanded ? (
+          <ul className="log-list">
+            {recentLogs.map((log, i) => (
+              <li key={i} className={i === 0 ? 'log-latest' : ''}>{log}</li>
+            ))}
+          </ul>
+        ) : (
+          <p>{history[0]}</p>
+        )}
+      </div>
       <div className="history-stack"><button>¥{stats.money}</button><button>舍友 {stats.roommateFavor}</button></div>
     </footer>
   )
@@ -571,8 +606,9 @@ function SimplePanel({ title, lines, onBack }) {
 // ==================== 主游戏画面 ====================
 function GameBoard() {
   const { phase, stats, currentEvent, lastActionResult } = useGame()
+  const flashClass = lastActionResult?.triggeredRollCall ? 'roll-call-flash' : ''
   return (
-    <div className={`game-shell ${stats.mood < 20 ? 'danger-mood' : ''}`}>
+    <div className={`game-shell ${stats.mood < 20 ? 'danger-mood' : ''} ${flashClass}`}>
       <PhoneFrame />
       <main className="control-board no-top-meter">
         <section className="stage">

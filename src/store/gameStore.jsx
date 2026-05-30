@@ -197,6 +197,7 @@ const initialState = {
   dailyLogs: [],
   phoneTab: 'home',
   moodSnapshots: [],
+  eventMessage: null,
   result: null,
   lastActionResult: null,
   settlementResult: null,
@@ -250,6 +251,25 @@ function gameReducer(state, action) {
       const nextStats = clampStats(applyDeltas(state.stats, dawnResult.deltas))
       const failed = checkStatsFailure(nextStats, state)
       if (failed) return { ...failed, history: [dawnResult.description, ...failed.history].slice(0, 8) }
+
+      // 凌晨事件检测
+      const es = buildEngineState({ ...state, stats: nextStats, currentCourse: 0 })
+      const dawnEligible = findEligibleEvents(eventPool, es, 'dawn')
+      const dawnPicked = tryTriggerEvent(dawnEligible)
+      if (dawnPicked) {
+        const resolvedDesc = resolveText(dawnPicked.description, state.dawnAction)
+        return {
+          ...state,
+          stats: nextStats,
+          phase: PHASES.DAY,
+          currentCourse: 0,
+          currentEvent: { ...dawnPicked, description: resolvedDesc },
+          usedEventIds: [...state.usedEventIds, dawnPicked.id],
+          eventMessage: { from: '系统通知', text: `🌙 ${dawnPicked.title}` },
+          history: [dawnResult.description, ...state.history].slice(0, 8),
+        }
+      }
+
       return {
         ...state,
         stats: nextStats,
@@ -358,10 +378,16 @@ function gameReducer(state, action) {
           ...picked,
           description: resolveText(picked.description, engineAction),
         }
+        // 根据事件来源生成手机消息
+        const msgFrom = picked.id.includes('random_teacher_dm') ? '老师私信'
+          : picked.id.includes('social_invite') ? '舍友群聊'
+          : picked.id.includes('surprise_quiz') || picked.id.includes('roll_call') ? '班级通知'
+          : '系统通知'
         return {
           ...cleared,
           currentEvent: resolvedEvent,
           usedEventIds: [...state.usedEventIds, picked.id],
+          eventMessage: { from: msgFrom, text: `📬 ${picked.title}` },
         }
       }
 
@@ -392,6 +418,7 @@ function gameReducer(state, action) {
         ...state,
         stats: nextStats,
         currentEvent: null,
+        eventMessage: null,
         history: [resolved.flavorText, ...state.history].slice(0, 8),
       }
 
