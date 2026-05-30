@@ -98,7 +98,7 @@ export interface EventOption {
 export interface GameEvent {
   id: string
   phase: 'dawn' | 'course_break'
-  // 触发条件表达式，由 events.ts 的 evalCondition 解析
+  // 触发条件表达式，由 events.ts 的 parseCondition 解析
   // 支持的变量: action, trait, special, credits, mood, money, roommateFavor, skipRate
   condition: string
   title: string

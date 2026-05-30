@@ -2,7 +2,7 @@
 // 支持: >=, <=, >, <, ==, !=, and, or, 'default'
 // ctx 统一为 Record<string, string | number>，纯数字场景传数字值即可
 
-export function evalCondition(expr: string, ctx: Record<string, string | number>): boolean {
+export function parseCondition(expr: string, ctx: Record<string, string | number>): boolean {
   if (expr === 'default') return true
   if (!expr || expr.trim() === '') return false
 
@@ -24,13 +24,13 @@ function evalAnd(expr: string, ctx: Record<string, string | number>): boolean {
 function evalCompare(expr: string, ctx: Record<string, string | number>): boolean {
   const match = expr.match(/^(\w+)\s*(>=|<=|!=|==|>|<)\s*'?([^']*)'?$/)
   if (!match) {
-    console.warn(`[evalCondition] invalid expression: "${expr}"`)
+    console.warn(`[parseCondition] invalid expression: "${expr}"`)
     return false
   }
   const [, key, op, valStr] = match
   const a = ctx[key]
   if (a === undefined) {
-    console.warn(`[evalCondition] unknown variable: "${key}" in "${expr}"`)
+    console.warn(`[parseCondition] unknown variable: "${key}" in "${expr}"`)
     return false
   }
 
@@ -39,7 +39,7 @@ function evalCompare(expr: string, ctx: Record<string, string | number>): boolea
       case '==': return a === valStr
       case '!=': return a !== valStr
       default:
-        console.warn(`[evalCondition] operator "${op}" not supported for strings in "${expr}"`)
+        console.warn(`[parseCondition] operator "${op}" not supported for strings in "${expr}"`)
         return false
     }
   }

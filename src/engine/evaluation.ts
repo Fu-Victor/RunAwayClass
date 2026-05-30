@@ -1,7 +1,7 @@
 import type { Evaluation, GameState, Rating } from './types'
 import type { EvaluationTexts } from '../content/types'
 import { evaluationTexts } from '../content/loader'
-import { evalCondition } from './conditionEval'
+import { parseCondition } from './conditionEval'
 
 export function evaluate(state: GameState): Evaluation {
   const { stats, decisions, thresholds } = state
@@ -68,7 +68,7 @@ function matchTitle(
   }
 
   for (const candidate of pool) {
-    if (evalCondition(candidate.condition, ctx)) {
+    if (parseCondition(candidate.condition, ctx)) {
       return { title: candidate.title, comment: candidate.comment }
     }
   }

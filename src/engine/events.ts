@@ -1,6 +1,6 @@
 import type { GameEvent, GameState, StatsDelta } from './types'
 import { chance, pick } from './random'
-import { evalCondition } from './conditionEval'
+import { parseCondition } from './conditionEval'
 
 export function findEligibleEvents(
   pool: readonly GameEvent[],
@@ -10,7 +10,7 @@ export function findEligibleEvents(
   return pool.filter(e =>
     e.phase === phase
     && !state.usedEventIds.includes(e.id)
-    && evalCondition(e.condition, buildTriggerCtx(state)),
+    && parseCondition(e.condition, buildTriggerCtx(state)),
   )
 }
 
