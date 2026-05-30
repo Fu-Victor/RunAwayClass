@@ -24,7 +24,7 @@ export const statDescriptions = {
       { min: 0, max: 4, text: '肉眼可见的灵魂出窍', level: 'critical' },
     ],
   },
-  fullness: {
+  hunger: {
     ranges: [
       { min: 80, max: 100, text: '吃得很饱，战斗力满格', level: 'excellent' },
       { min: 50, max: 79, text: '不饿不撑，刚好能学习', level: 'good' },
@@ -42,7 +42,7 @@ export const statDescriptions = {
       { min: 0, max: 4, text: '生活彻底失去了色彩', level: 'critical' },
     ],
   },
-  credit: {
+  credits: {
     ranges: [
       { min: 70, max: 100, text: '学神附体，教务处都在夸你', level: 'excellent' },
       { min: 50, max: 69, text: '学分稳稳当当，毕业有望', level: 'good' },
@@ -51,7 +51,7 @@ export const statDescriptions = {
       { min: 0, max: 14, text: '教务处已经在起草你的退学通知书了', level: 'critical' },
     ],
   },
-  roommate: {
+  roommateFavor: {
     ranges: [
       { min: 80, max: 100, text: '舍友是你异父异母的亲兄弟', level: 'excellent' },
       { min: 50, max: 79, text: '宿舍关系融洽，偶尔还能借个笔记', level: 'good' },
@@ -100,8 +100,8 @@ export function getNightMindset(stats) {
   else if (stats.mood < 30) texts.push(...nightMindsetTexts.lowMood)
   else texts.push(...nightMindsetTexts.midMood)
 
-  if (stats.credit >= 60) texts.push(...nightMindsetTexts.highCredit)
-  else if (stats.credit < 30) texts.push(...nightMindsetTexts.lowCredit)
+  if (stats.credits >= 60) texts.push(...nightMindsetTexts.highCredit)
+  else if (stats.credits < 30) texts.push(...nightMindsetTexts.lowCredit)
 
   return texts[Math.floor(Math.random() * texts.length)]
 }
@@ -160,10 +160,10 @@ export const dailySettlementTexts = {
 }
 
 export function getDailySettlementText(stats) {
-  if (stats.mood < 30 || stats.credit < 30) {
+  if (stats.mood < 30 || stats.credits < 30) {
     return dailySettlementTexts.bad[Math.floor(Math.random() * dailySettlementTexts.bad.length)]
   }
-  if (stats.mood > 60 && stats.credit > 50) {
+  if (stats.mood > 60 && stats.credits > 50) {
     return dailySettlementTexts.good[Math.floor(Math.random() * dailySettlementTexts.good.length)]
   }
   return dailySettlementTexts.normal[Math.floor(Math.random() * dailySettlementTexts.normal.length)]

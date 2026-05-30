@@ -4,7 +4,7 @@
 
 export const statMeta = [
   {
-    key: 'credit', label: '学分', icon: '📚', max: 100, tone: 'credit', order: 1,
+    key: 'credits', label: '学分', icon: '📚', max: 100, tone: 'credit', order: 1,
     description: '核心目标值，上课/帮人代课等获取。太低会被退学。',
     thresholds: [
       { value: 70, label: '优', color: '#55c47c' },
@@ -28,7 +28,7 @@ export const statMeta = [
     ],
   },
   {
-    key: 'fullness', label: '饱腹', icon: '🍕', max: 100, tone: 'hunger', order: 4,
+    key: 'hunger', label: '饱腹', icon: '🍕', max: 100, tone: 'hunger', order: 4,
     description: '代表饥饿度，低饱腹会持续扣心情。',
     thresholds: [
       { value: 70, label: '优', color: '#55c47c' },
@@ -52,7 +52,7 @@ export const statMeta = [
     ],
   },
   {
-    key: 'roommate', label: '舍友好感', icon: '🤝', max: 100, tone: 'roommate', order: 7,
+    key: 'roommateFavor', label: '舍友好感', icon: '🤝', max: 100, tone: 'roommate', order: 7,
     description: '影响旷课时舍友是否帮你打掩护，以及社交事件的触发。',
     thresholds: [
       { value: 70, label: '优', color: '#55c47c' },
@@ -62,7 +62,7 @@ export const statMeta = [
 ]
 
 /** 顶部横条展示的数值（核心+次要） */
-export const topBarStats = ['credit', 'mood', 'energy', 'fullness', 'entertainment']
+export const topBarStats = ['credits', 'mood', 'energy', 'hunger', 'entertainment']
 
 /** 侧边栏状态展示的数值（全部） */
-export const sidebarStats = ['credit', 'mood', 'energy', 'fullness', 'entertainment', 'money', 'roommate']
+export const sidebarStats = ['credits', 'mood', 'energy', 'hunger', 'entertainment', 'money', 'roommateFavor']
