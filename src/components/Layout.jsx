@@ -1,14 +1,16 @@
-import { Outlet } from 'react-router-dom'
+import { Outlet, useLocation } from 'react-router-dom'
 import Navbar from './Navbar'
 
 function Layout() {
+  const { pathname } = useLocation()
+  const isGameRoute = pathname.startsWith('/game')
+
   return (
     <div className="app">
-      <Navbar />
-      <main >
-        <Outlet /> {/* 子路由会在这里渲染 */}
+      {!isGameRoute && <Navbar />}
+      <main>
+        <Outlet />
       </main>
-    
     </div>
   )
 }
