@@ -1,0 +1,53 @@
+import type { GameState, PlayerStats, StatsDelta } from './types'
+import { DAILY_DECAY, STAT_MAX, STAT_MIN } from './constants'
+
+export interface SettlementResult {
+  deltas: StatsDelta
+  // 由精力/饱腹/娱乐均值与期望值比较产生的心情变动
+  moodDeltaFromAvg: number
+  warningTriggered: boolean
+  gameOver: boolean
+  description: string
+}
+
+export function settleDay(state: GameState): SettlementResult {
+  const { stats, pendingDeltas, thresholds } = state
+  const total: StatsDelta = { ...pendingDeltas }
+
+  for (const key of Object.keys(DAILY_DECAY) as (keyof PlayerStats)[]) {
+    total[key] = (total[key] ?? 0) + DAILY_DECAY[key]
+  }
+
+  const secondaryAvg = (stats.energy + stats.hunger + stats.entertainment) / 3
+  const moodDeltaFromAvg = Math.round((secondaryAvg - thresholds.expectedAvg) / 10)
+  total.mood = (total.mood ?? 0) + moodDeltaFromAvg
+
+  let desc: string
+  if (moodDeltaFromAvg > 3) {
+    desc = '今天吃好睡好玩好，心情美滋滋！'
+  } else if (moodDeltaFromAvg < -3) {
+    desc = '今天过得一团糟，身心俱疲……'
+  } else {
+    desc = '平平无奇的一天结束了。'
+  }
+
+  const newCredits = stats.credits + (total.credits ?? 0)
+  const warningTriggered = newCredits < thresholds.warningCredits
+  if (warningTriggered) {
+    desc += ' ⚠️ 教务处提醒：学分已进入危险区！'
+  }
+
+  const newMood = stats.mood + (total.mood ?? 0)
+  const gameOver = newMood <= thresholds.crashMood
+
+  return { deltas: total, moodDeltaFromAvg, warningTriggered, gameOver, description: desc }
+}
+
+export function applyDeltas(stats: PlayerStats, deltas: StatsDelta): PlayerStats {
+  const result = { ...stats }
+  for (const key of Object.keys(deltas) as (keyof PlayerStats)[]) {
+    const delta = deltas[key] ?? 0
+    result[key] = Math.max(STAT_MIN[key], Math.min(STAT_MAX[key], result[key] + delta))
+  }
+  return result
+}
