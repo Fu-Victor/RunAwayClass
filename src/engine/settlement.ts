@@ -1,5 +1,6 @@
 import type { GameState, PlayerStats, StatsDelta } from './types'
 import { DAILY_DECAY, STAT_MAX, STAT_MIN } from './constants'
+import { settlementTexts } from '../content/loader'
 
 export interface SettlementResult {
   deltas: StatsDelta
@@ -24,17 +25,17 @@ export function settleDay(state: GameState): SettlementResult {
 
   let desc: string
   if (moodDeltaFromAvg > 3) {
-    desc = '今天吃好睡好玩好，心情美滋滋！'
+    desc = settlementTexts.moodGood
   } else if (moodDeltaFromAvg < -3) {
-    desc = '今天过得一团糟，身心俱疲……'
+    desc = settlementTexts.moodBad
   } else {
-    desc = '平平无奇的一天结束了。'
+    desc = settlementTexts.moodNormal
   }
 
   const newCredits = stats.credits + (total.credits ?? 0)
   const warningTriggered = newCredits < thresholds.warningCredits
   if (warningTriggered) {
-    desc += ' ⚠️ 教务处提醒：学分已进入危险区！'
+    desc += settlementTexts.creditWarning
   }
 
   const newMood = stats.mood + (total.mood ?? 0)

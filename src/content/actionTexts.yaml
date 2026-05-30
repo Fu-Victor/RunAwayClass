@@ -1,0 +1,43 @@
+# 课程行为文案。编写说明见末尾。
+attend:
+  moodHigh:        "[TODO] 心情>=70 时上课的描述"
+  moodLow:         "[TODO] 心情<=30 时上课的描述"
+  normal:          "[TODO] 正常上课的描述"
+  sleepSuffix:     "[TODO] 精力低触发睡着，追加在上课描述后。注意以空格开头以衔接前文"
+  phoneSuffix:     "[TODO] 娱乐低触发玩手机，追加在上课描述后。注意以空格开头以衔接前文"
+  rollCallSuffix:  "[TODO] 上课时被点名答到，追加在上课描述后。注意以空格开头以衔接前文"
+
+skip:
+  rollCall:        "[TODO] 旷课且被点名"
+  successPool:
+    - "[TODO] 旷课成功描述 1"
+    - "[TODO] 旷课成功描述 2"
+    - "[TODO] 旷课成功描述 3"
+    - "[TODO] 旷课成功描述 4"
+
+subForOther:
+  main:             "[TODO] 帮人代课"
+  rollCallSuffix:   "[TODO] 帮人代课时被点到替的人的名字，追加在 main 后。注意以空格开头"
+
+hireSub:
+  # {cost} 会被替换为 HIRE_SUB_COST 的值（当前为 25）
+  fail:             "[TODO] 找人代课被坑（代课人也没去），用 {cost}"
+  rollCall:         "[TODO] 找人代课且点名但代课者成功答到，用 {cost}"
+  safe:             "[TODO] 找人代课成功且未点名，用 {cost}"
+
+dawn:
+  sleepEarly:       "[TODO] 凌晨：早睡养生"
+  gaming:           "[TODO] 凌晨：熬夜打游戏"
+  cram:             "[TODO] 凌晨：通宵赶作业"
+  goOut:            "[TODO] 凌晨：出去浪"
+  normalRest:       "[TODO] 凌晨：正常休息"
+
+# ========================
+# 编写说明
+# ========================
+# 1. 文案风格：搞笑、抽象、轻松，善用网络梗和大学生黑话，绝不严肃
+# 2. 含 {cost} 的字段会被引擎替换为实际金钱数值，保留即可
+# 3. 标记 [TODO] 的条目需要替换为正式文案
+# 4. suffix 类字段会拼接在前一段描述之后，以空格起始即可
+# 5. successPool 为随机池，引擎会从中随机选一条展示
+# 6. 每条文案控制在 40 字以内，保持节奏紧凑

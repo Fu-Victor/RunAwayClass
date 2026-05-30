@@ -1,0 +1,88 @@
+# 结算评价体系。评级 S~D，每级有多个称号候选。
+# condition 字段为匹配条件，引擎会解析并依次匹配，第一个满足的即选中。
+# 支持的变量: credits, mood, money, roommateFavor, skipRate
+# 支持的运算符: >=, >, <=, <, ==, and, or
+# "default" 表示无条件兜底
+
+titlePool:
+  S:
+    - title: "[TODO] S 级称号 1"
+      comment: "[TODO] 评语"
+      condition: "credits >= 70 and mood >= 70"
+    - title: "[TODO] S 级称号 2"
+      comment: "[TODO] 评语"
+      condition: "money >= 80"
+    - title: "[TODO] S 级称号 3"
+      comment: "[TODO] 评语"
+      condition: "roommateFavor >= 80"
+    - title: "[TODO] S 级称号 4（兜底）"
+      comment: "[TODO] 评语"
+      condition: "default"
+
+  A:
+    - title: "[TODO] A 级称号 1"
+      comment: "[TODO] 评语"
+      condition: "credits >= 60 and mood < 50"
+    - title: "[TODO] A 级称号 2"
+      comment: "[TODO] 评语"
+      condition: "skipRate > 0.5 and credits >= 45"
+    - title: "[TODO] A 级称号 3"
+      comment: "[TODO] 评语"
+      condition: "money >= 60"
+    - title: "[TODO] A 级称号 4（兜底）"
+      comment: "[TODO] 评语"
+      condition: "default"
+
+  B:
+    - title: "[TODO] B 级称号 1"
+      comment: "[TODO] 评语"
+      condition: "money >= 50"
+    - title: "[TODO] B 级称号 2"
+      comment: "[TODO] 评语"
+      condition: "roommateFavor >= 60"
+    - title: "[TODO] B 级称号 3（兜底）"
+      comment: "[TODO] 评语"
+      condition: "default"
+
+  C:
+    - title: "[TODO] C 级称号 1"
+      comment: "[TODO] 评语"
+      condition: "mood >= 50"
+    - title: "[TODO] C 级称号 2"
+      comment: "[TODO] 评语"
+      condition: "money >= 40"
+    - title: "[TODO] C 级称号 3"
+      comment: "[TODO] 评语"
+      condition: "roommateFavor >= 50"
+    - title: "[TODO] C 级称号 4（兜底）"
+      comment: "[TODO] 评语"
+      condition: "default"
+
+  D:
+    - title: "[TODO] D 级称号（兜底）"
+      comment: "[TODO] 评语"
+      condition: "default"
+
+# 没有匹配到任何称号时的兜底
+fallback:
+  title: "[TODO] 兜底称号"
+  comment: "[TODO] 兜底评语"
+
+# 心情归零但学分尚可的失败评价
+failureHighCredits:
+  title: "[TODO]"
+  comment: "[TODO]"
+
+# 心情归零且学分极低的失败评价
+failureLowCredits:
+  title: "[TODO]"
+  comment: "[TODO]"
+
+# ========================
+# 编写说明
+# ========================
+# 1. 每个评级至少 3 个候选称号，第一个满足 condition 的会被选中
+# 2. 兜底（condition: default）必须放在该评级的最后
+# 3. 称号力求搞笑、玩梗，可参考需求文档中的示例称号
+# 4. 条件判断支持变量: credits, mood, money, roommateFavor, skipRate (0~1)
+# 5. 条件判断支持运算符: >=, >, <=, <, ==, and, or
