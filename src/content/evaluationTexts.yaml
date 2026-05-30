@@ -1,0 +1,115 @@
+# 结算评价体系。评级 S~D，每级有多个称号候选。
+# condition 字段为匹配条件，引擎会解析并依次匹配，第一个满足的即选中。
+# 支持的变量: credits, mood, energy, hunger, entertainment, money, roommateFavor, skipRate
+# 支持的运算符: >=, >, <=, <, ==, and, or
+# "default" 表示无条件兜底
+
+titlePool:
+  S:
+    - title: "卷王之王"
+      comment: "学得好心态还稳，同学们怀疑你是 AI"
+      condition: "credits >= 70 and mood >= 70"
+    - title: "商业鬼才"
+      comment: "课是一节没上，钱是一分没少挣，你是懂大学生变现的"
+      condition: "money >= 80"
+    - title: "社交天花板"
+      comment: "舍友把你当亲爹供着，人脉就是最好的隐形学分"
+      condition: "roommateFavor >= 80"
+    - title: "时间管理大师"
+      comment: "精力充沛玩得开心，学分还没落下，你是懂时间配平的"
+      condition: "energy >= 75 and entertainment >= 70 and credits >= 50"
+    - title: "六边形战士"
+      comment: "学习搞钱社交全拉满，你活成了大学生最想要的样子"
+      condition: "default"
+
+  A:
+    - title: "苦行僧"
+      comment: "学分挺高但人快没了，属于是用命换绩点的狼灭"
+      condition: "credits >= 60 and mood < 50"
+    - title: "逃课仙人"
+      comment: "你用实力证明：课，是真的可以不上，而且还能不挂科"
+      condition: "skipRate > 0.5 and credits >= 45"
+    - title: "搞钱达人"
+      comment: "小金库日渐膨胀，至于上课——那是另外的价钱"
+      condition: "money >= 60"
+    - title: "踩线战神"
+      comment: "刚好飘过及格线但门门不挂，分不在高够用就行"
+      condition: "credits >= 45 and credits < 60 and mood >= 50"
+    - title: "人间清醒"
+      comment: "该学的学了该玩的玩了，主打一个张弛有度的平衡人生"
+      condition: "default"
+
+  B:
+    - title: "小本生意人"
+      comment: "手头有点小钱日子过得去，离财务自由还差一个比特币"
+      condition: "money >= 50"
+    - title: "宿舍交际花"
+      comment: "在宿舍人缘不错活得很滋润，至少借充电宝大家都会给你"
+      condition: "roommateFavor >= 60"
+    - title: "续航怪兽"
+      comment: "精力条长得离谱，别人都趴了你还在嗨"
+      condition: "energy >= 65 and mood >= 50"
+    - title: "及格万岁"
+      comment: "门门飘过不挂科，多一分都觉得是浪费"
+      condition: "credits >= 45 and credits < 60"
+    - title: "普通大学生"
+      comment: "没啥闪光点也挑不出大毛病，安安稳稳混到毕业"
+      condition: "default"
+
+  C:
+    - title: "心态王者"
+      comment: "学分已经裂开了但心态稳如泰山，主打一个笑对人生"
+      condition: "mood >= 50"
+    - title: "贫困潦倒"
+      comment: "钱包比脸还干净，但凭着蹭吃蹭喝顽强地活到了今天"
+      condition: "money >= 40"
+    - title: "社交初级选手"
+      comment: "和舍友处得还行至少没被排挤，在这宿舍算是个好人"
+      condition: "roommateFavor >= 50"
+    - title: "夜猫子"
+      comment: "白天萎靡晚上精神，你的时差已经乱得和留学生一样了"
+      condition: "entertainment >= 60 and energy < 40"
+    - title: "凑合过吧"
+      comment: "日子还能过，没什么高光时刻但好在也没有大翻车"
+      condition: "default"
+
+  D:
+    - title: "挂科慈善家"
+      comment: "课没上几次钱倒花了不少，主打一个反向理财"
+      condition: "credits <= 30 and money >= 30"
+    - title: "独狼"
+      comment: "集体活动一概不参加，教室门朝哪开都快忘了"
+      condition: "skipRate > 0.7"
+    - title: "社交难民"
+      comment: "舍友见面都不打招呼了，宿舍关系已经跌到冰点"
+      condition: "roommateFavor <= 30"
+    - title: "废柴乐子人"
+      comment: "学分已经没救了，但你好像完全不在意"
+      condition: "mood >= 60 and credits <= 30"
+    - title: "摆烂之王"
+      comment: "学位证是打印店 50 块做的，但好歹是个证"
+      condition: "default"
+
+# 没有匹配到任何称号时的兜底
+fallback:
+  title: "神秘人物"
+  comment: "你的大学生涯过于抽象，系统也无法归类——也算一种本事"
+
+# 心情归零但学分尚可的失败评价
+failureHighCredits:
+  title: "崩溃的学霸"
+  comment: "学问还在但快乐没了，这一刻你怀疑当初填志愿时脑子里进了水"
+
+# 心情归零且学分极低的失败评价
+failureLowCredits:
+  title: "人财两空"
+  comment: "学分没了心态也崩了，大学四年主打一个体验卡到期自动清退"
+
+# ========================
+# 编写说明
+# ========================
+# 1. 每个评级至少 5 个候选称号，第一个满足 condition 的会被选中
+# 2. 兜底（condition: default）必须放在该评级的最后
+# 3. 称号力求搞笑、玩梗，可参考需求文档中的示例称号
+# 4. 条件判断支持变量: credits, mood, money, roommateFavor, skipRate (0~1)
+# 5. 条件判断支持运算符: >=, >, <=, <, ==, and, or

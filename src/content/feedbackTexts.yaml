@@ -1,0 +1,69 @@
+# 数值区间反馈文案。引擎根据当前数值落入的区间匹配对应文案。
+# 区间格式: "低-高"，左右均包含。level 越大表示状态越危险。
+
+mood:
+  - range: "80-100"
+    text:  "心情起飞，看谁都顺眼"
+    level: 0
+  - range: "50-79"
+    text:  "还行，不悲不喜，主打一个佛"
+    level: 1
+  - range: "20-49"
+    text:  "有点 emo，PPT 都像在讽刺你"
+    level: 2
+  - range: "5-19"
+    text:  "绷不住了，随时可能哭出来"
+    level: 3
+  - range: "0-4"
+    text:  "已黑化，生人勿近"
+    level: 4
+
+energy:
+  - range: "70-100"
+    text:  "精神抖擞，再来两节都不困"
+    level: 0
+  - range: "40-69"
+    text:  "有点困，靠意志力续着"
+    level: 1
+  - range: "15-39"
+    text:  "眼皮打架，PPT 开始重影了"
+    level: 2
+  - range: "0-14"
+    text:  "再不睡可能当场关机"
+    level: 3
+
+hunger:
+  - range: "70-100"
+    text:  "肚子饱饱，有种淡淡的幸福"
+    level: 0
+  - range: "40-69"
+    text:  "有点饿，开始盘算下课吃啥"
+    level: 1
+  - range: "15-39"
+    text:  "肚子在叫，场面一度很尴尬"
+    level: 2
+  - range: "0-14"
+    text:  "饿出幻觉，书上的字像饼干"
+    level: 3
+
+entertainment:
+  - range: "70-100"
+    text:  "精神富足，手机电量也满格"
+    level: 0
+  - range: "40-69"
+    text:  "有点无聊，靠刷手机凑合过"
+    level: 1
+  - range: "15-39"
+    text:  "无聊透了，开始数天花板格子"
+    level: 2
+  - range: "0-14"
+    text:  "精神枯竭，大脑已进入待机"
+    level: 3
+
+# ========================
+# 编写说明
+# ========================
+# 1. 每个区间一条文案，控制在 20 字以内
+# 2. 风格：搞笑、轻松，范围越危险语气越夸张
+# 3. level 0 = 最佳状态，level 越大越差，供 UI 决定展示样式
+# 4. 区间边界与引擎中 STAT_MIN/MAX 对应，不要修改 range 字段
