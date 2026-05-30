@@ -1,9 +1,19 @@
-import type { Difficulty, DifficultyConfig, PlayerStats, Thresholds } from './types'
+import type { DawnAction, Difficulty, DifficultyConfig, PlayerStats, Thresholds } from './types'
+
+// 9 节课时段
+export const TIME_SLOTS = [
+  '8:00-9:40', '9:50-11:30', '11:40-13:20',
+  '13:30-15:10', '15:20-17:00', '17:10-18:50',
+  '19:00-20:40', '20:50-22:20', '22:30-23:59'
+] as const
+
+export const TOTAL_DAYS = 7
 
 export const DEFAULT_THRESHOLDS: Record<Difficulty, Thresholds> = {
-  easy:   { passCredits: 30, warningCredits: 40, tutorCredits: 60, crashMood: 0, expectedAvg: 40 },
-  normal: { passCredits: 45, warningCredits: 55, tutorCredits: 70, crashMood: 0, expectedAvg: 50 },
-  hard:   { passCredits: 60, warningCredits: 70, tutorCredits: 85, crashMood: 0, expectedAvg: 60 },
+  // warningCredits < passCredits，提前预警
+  easy:   { passCredits: 30, warningCredits: 20, tutorCredits: 60, crashMood: 0, expectedAvg: 40 },
+  normal: { passCredits: 45, warningCredits: 30, tutorCredits: 70, crashMood: 0, expectedAvg: 50 },
+  hard:   { passCredits: 60, warningCredits: 40, tutorCredits: 85, crashMood: 0, expectedAvg: 60 },
 }
 
 export const DIFFICULTY_CONFIGS: Record<Difficulty, DifficultyConfig> = {
@@ -12,7 +22,6 @@ export const DIFFICULTY_CONFIGS: Record<Difficulty, DifficultyConfig> = {
     courseSeriousRatio: 0.3,
     rollCallBias:       -0.15,
     eventPositiveBias:  0.15,
-    expectedAvg:        40,
     rewardMultiplier:   1.3,
   },
   normal: {
@@ -20,7 +29,6 @@ export const DIFFICULTY_CONFIGS: Record<Difficulty, DifficultyConfig> = {
     courseSeriousRatio: 0.5,
     rollCallBias:       0,
     eventPositiveBias:  0,
-    expectedAvg:        50,
     rewardMultiplier:   1.0,
   },
   hard: {
@@ -28,7 +36,6 @@ export const DIFFICULTY_CONFIGS: Record<Difficulty, DifficultyConfig> = {
     courseSeriousRatio: 0.7,
     rollCallBias:       0.15,
     eventPositiveBias:  -0.15,
-    expectedAvg:        60,
     rewardMultiplier:   0.75,
   },
 }
@@ -71,11 +78,21 @@ export const SUB_FOR_OTHER_EFFECT: PlayerStats = {
   credits: 2, mood: -2, energy: -12, hunger: -6, entertainment: -5, money: 20, roommateFavor: 0,
 }
 
-export const HIRE_SUB_COST = 25
-// 找人代课反被坑的概率
+// 找人代课 — 基础效果（风险叠加在 actions.ts 中处理）
+export const HIRE_SUB_EFFECT: PlayerStats = {
+  credits: 0, mood: 0, energy: 0, hunger: 0, entertainment: 0, money: -25, roommateFavor: 0,
+}
+
 export const HIRE_SUB_RISK = 0.15
 
-export const DAWN_EFFECTS: Record<string, PlayerStats> = {
+// go_out 凌晨行为的舍友好感度随机变化参数
+export const GO_OUT_ROOMMATE_DELTA = {
+  positive: 5,
+  negative: -5,
+  threshold: 0.5,
+} as const
+
+export const DAWN_EFFECTS: Record<DawnAction, PlayerStats> = {
   sleep_early: { credits: 0, mood: 5,  energy: 30,  hunger: -3, entertainment: -5,  money: 0,   roommateFavor: 5 },
   gaming:      { credits: 0, mood: 3,  energy: -20, hunger: -5, entertainment: 25,  money: 0,   roommateFavor: -10 },
   cram:        { credits: 3, mood: -3, energy: -25, hunger: -3, entertainment: -8,  money: 0,   roommateFavor: 0 },

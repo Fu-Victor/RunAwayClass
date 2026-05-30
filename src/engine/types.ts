@@ -16,7 +16,7 @@ export type StatsDelta = Partial<PlayerStats>
 export interface Thresholds {
   // 第7天结算时 credits 需 >= 此值方可通关
   passCredits: number
-  // credits 低于此值时触发教务警告
+  // credits 低于此值时触发教务警告（应 < passCredits，提前预警）
   warningCredits: number
   // credits 高于此值时解锁"家教"行为
   tutorCredits: number
@@ -36,7 +36,6 @@ export interface DifficultyConfig {
   rollCallBias: number
   // 正面事件概率偏移
   eventPositiveBias: number
-  expectedAvg: number
   // 所有行为收益的全局倍率
   rewardMultiplier: number
 }
@@ -65,15 +64,7 @@ export interface Course {
   teacher: Teacher
   // 0-8，对应 TIME_SLOTS 下标
   timeSlotIndex: number
-  // 展示给玩家的估算值，实际点名在推进时结算
-  estimatedRollCallProb: 'low' | 'medium' | 'high' | 'very_high'
 }
-
-export const TIME_SLOTS = [
-  '8:00-9:40', '9:50-11:30', '11:40-13:20',
-  '13:30-15:10', '15:20-17:00', '17:10-18:50',
-  '19:00-20:40', '20:50-22:20', '22:30-23:59'
-] as const
 
 export type CourseAction = 'attend' | 'skip' | 'sub_for_other' | 'hire_sub'
 
@@ -83,6 +74,18 @@ export type DawnAction = 'sleep_early' | 'gaming' | 'cram' | 'go_out' | 'normal_
 export interface DayDecision {
   courseActions: CourseAction[]
   dawnAction: DawnAction
+}
+
+// 工厂函数：确保 courseActions 长度 === TIME_SLOTS.length
+export function createDayDecision(
+  courseActions: CourseAction[],
+  dawnAction: DawnAction,
+  slotCount: number,
+): DayDecision {
+  if (courseActions.length !== slotCount) {
+    throw new Error(`createDayDecision: expected ${slotCount} courseActions, got ${courseActions.length}`)
+  }
+  return { courseActions, dawnAction }
 }
 
 export interface EventOption {
@@ -95,7 +98,9 @@ export interface EventOption {
 export interface GameEvent {
   id: string
   phase: 'dawn' | 'course_break'
-  triggerCondition: string
+  // 触发条件表达式，由 events.ts 的 evalCondition 解析
+  // 支持的变量: action, trait, special, credits, mood, money, roommateFavor, skipRate
+  condition: string
   title: string
   description: string
   options: EventOption[]
@@ -144,6 +149,8 @@ export interface GameState {
   // 当日累计未应用的数值变动
   pendingDeltas: StatsDelta
   // 已触发事件 ID，同局不重复
-  usedEventIds: Set<string>
+  usedEventIds: string[]
   showWarning: boolean
+  // 累计旷课次数，用于点名概率计算
+  totalSkipCount: number
 }

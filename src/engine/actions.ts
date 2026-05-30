@@ -1,7 +1,8 @@
 import type { Course, CourseAction, DawnAction, DifficultyConfig, PlayerStats, StatsDelta } from './types'
 import {
   ATTEND_EFFECT, SKIP_EFFECT, SUB_FOR_OTHER_EFFECT,
-  HIRE_SUB_COST, HIRE_SUB_RISK, DAWN_EFFECTS,
+  HIRE_SUB_EFFECT, HIRE_SUB_RISK, DAWN_EFFECTS,
+  GO_OUT_ROOMMATE_DELTA,
 } from './constants'
 import { chance, pick } from './random'
 import { calcRollCallProb, checkRollCall } from './courseGen'
@@ -32,23 +33,23 @@ export function resolveCourseAction(
     case 'attend':
       applyEffect(deltas, ATTEND_EFFECT, mult)
       if (stats.mood >= 70) {
-        deltas.credits = (deltas.credits ?? 0) + Math.round(2 * mult)
         desc = actionTexts.attend.moodHigh
+        add(deltas, 'credits', Math.round(2 * mult))
       } else if (stats.mood <= 30) {
-        deltas.credits = Math.max(0, (deltas.credits ?? 0) - 1)
         desc = actionTexts.attend.moodLow
+        add(deltas, 'credits', -Math.round(1 * mult))
       } else {
         desc = actionTexts.attend.normal
       }
 
       if (stats.energy <= 25 && chance(0.4)) {
-        deltas.credits = (deltas.credits ?? 0) - 1
         flags.sleep = true
+        add(deltas, 'credits', -Math.round(1 * mult))
         desc += actionTexts.attend.sleepSuffix
       }
       if (stats.entertainment <= 25 && chance(0.35)) {
-        deltas.credits = (deltas.credits ?? 0) - 1
         flags.phone = true
+        add(deltas, 'credits', -Math.round(1 * mult))
         desc += actionTexts.attend.phoneSuffix
       }
       if (course.teacher.trait === 'roll_call_lover'
@@ -62,10 +63,14 @@ export function resolveCourseAction(
       applyEffect(deltas, SKIP_EFFECT, mult)
       if (checkRollCall(calcRollCallProb(course, skipHistoryCount, config))) {
         flags.rollCall = true
-        deltas.credits = (deltas.credits ?? 0) - 3
+        add(deltas, 'credits', -Math.round(3 * mult))
         desc = actionTexts.skip.rollCall
       } else {
-        desc = pick(actionTexts.skip.successPool)
+        try {
+          desc = pick(actionTexts.skip.successPool)
+        } catch {
+          desc = '你翘课了，啥也没发生。'
+        }
       }
       break
 
@@ -78,15 +83,15 @@ export function resolveCourseAction(
       break
 
     case 'hire_sub':
-      deltas.money = -HIRE_SUB_COST
+      applyEffect(deltas, HIRE_SUB_EFFECT, mult)
       if (chance(HIRE_SUB_RISK)) {
         flags.hireFail = true
-        deltas.credits = -3
-        desc = actionTexts.hireSub.fail.replace('{cost}', String(HIRE_SUB_COST))
+        add(deltas, 'credits', -Math.round(3 * mult))
+        desc = actionTexts.hireSub.fail.replace('{cost}', String(-HIRE_SUB_EFFECT.money))
       } else if (checkRollCall(calcRollCallProb(course, skipHistoryCount, config))) {
-        desc = actionTexts.hireSub.rollCall.replace('{cost}', String(HIRE_SUB_COST))
+        desc = actionTexts.hireSub.rollCall.replace('{cost}', String(-HIRE_SUB_EFFECT.money))
       } else {
-        desc = actionTexts.hireSub.safe.replace('{cost}', String(HIRE_SUB_COST))
+        desc = actionTexts.hireSub.safe.replace('{cost}', String(-HIRE_SUB_EFFECT.money))
       }
       break
   }
@@ -105,7 +110,7 @@ export function resolveDawnAction(action: DawnAction): {
   deltas: StatsDelta
   description: string
 } {
-  const deltas = { ...DAWN_EFFECTS[action] }
+  const deltas: StatsDelta = { ...DAWN_EFFECTS[action] }
   const texts = actionTexts.dawn
   let desc = ''
 
@@ -115,7 +120,12 @@ export function resolveDawnAction(action: DawnAction): {
     case 'cram':        desc = texts.cram; break
     case 'go_out':
       desc = texts.goOut
-      deltas.roommateFavor = Math.random() > 0.5 ? 5 : -5
+      const prev = deltas.roommateFavor ?? 0
+      deltas.roommateFavor = prev + (
+        Math.random() > GO_OUT_ROOMMATE_DELTA.threshold
+          ? GO_OUT_ROOMMATE_DELTA.positive
+          : GO_OUT_ROOMMATE_DELTA.negative
+      )
       break
     case 'normal_rest': desc = texts.normalRest; break
   }
@@ -123,11 +133,15 @@ export function resolveDawnAction(action: DawnAction): {
   return { deltas, description: desc }
 }
 
+function add(deltas: StatsDelta, key: keyof StatsDelta, val: number): void {
+  deltas[key] = (deltas[key] ?? 0) + val
+}
+
 function applyEffect(deltas: StatsDelta, effect: PlayerStats, multiplier: number): void {
   for (const key of Object.keys(effect) as (keyof PlayerStats)[]) {
     const val = effect[key]
     if (val !== 0) {
-      deltas[key] = (deltas[key] ?? 0) + Math.round(val * multiplier)
+      add(deltas, key, Math.round(val * multiplier))
     }
   }
 }

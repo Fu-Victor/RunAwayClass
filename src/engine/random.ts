@@ -1,8 +1,10 @@
 export function randInt(min: number, max: number): number {
+  if (min > max) throw new Error(`randInt: min(${min}) > max(${max})`)
   return Math.floor(Math.random() * (max - min + 1)) + min
 }
 
 export function randFloat(min: number, max: number): number {
+  if (min > max) throw new Error(`randFloat: min(${min}) > max(${max})`)
   return Math.random() * (max - min) + min
 }
 
@@ -11,11 +13,12 @@ export function chance(probability: number): boolean {
 }
 
 export function pick<T>(arr: readonly T[]): T {
+  if (arr.length === 0) throw new Error('pick: empty array')
   return arr[Math.floor(Math.random() * arr.length)]
 }
 
 export function pickN<T>(arr: readonly T[], n: number): T[] {
-  return [...arr].sort(() => Math.random() - 0.5).slice(0, n)
+  return shuffle(arr).slice(0, n)
 }
 
 // Fisher-Yates 洗牌
@@ -29,6 +32,7 @@ export function shuffle<T>(arr: readonly T[]): T[] {
 }
 
 export function weightedPick<T>(items: readonly [T, number][]): T {
+  if (items.length === 0) throw new Error('weightedPick: empty items')
   const total = items.reduce((sum, [, w]) => sum + w, 0)
   let r = Math.random() * total
   for (const [value, weight] of items) {

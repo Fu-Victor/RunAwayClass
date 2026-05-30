@@ -54,9 +54,13 @@ function matchTitle(
     return texts.fallback
   }
 
+  // 全量 ctx：stats 所有字段 + skipRate
   const ctx: Record<string, number> = {
     credits: stats.credits,
     mood: stats.mood,
+    energy: stats.energy,
+    hunger: stats.hunger,
+    entertainment: stats.entertainment,
     money: stats.money,
     roommateFavor: stats.roommateFavor,
     skipRate,
@@ -78,11 +82,12 @@ export function evaluateFailure(stats: GameState['stats'], texts: EvaluationText
   return { rating: 'D', title: texts.failureHighCredits.title, comment: texts.failureHighCredits.comment }
 }
 
-// 简单的条件表达式解析器，支持 and/or 和比较运算
+// 条件求值器 — 与 events.ts 共用同一套 DSL
+// 支持: >=, <=, >, <, ==, !=, and, or, 'default'
 function evalCondition(expr: string, ctx: Record<string, number>): boolean {
   if (expr === 'default') return true
+  if (!expr || expr.trim() === '') return false
 
-  // 先处理 or（优先级最低）
   const orParts = expr.split(/\s+or\s+/)
   for (const part of orParts) {
     if (evalAnd(part.trim(), ctx)) return true
@@ -99,18 +104,26 @@ function evalAnd(expr: string, ctx: Record<string, number>): boolean {
 }
 
 function evalCompare(expr: string, ctx: Record<string, number>): boolean {
-  const match = expr.match(/^(\w+)\s*(>=|<=|>|<|==)\s*([\d.]+)$/)
-  if (!match) return false
+  const match = expr.match(/^(\w+)\s*(>=|<=|!=|==|>|<)\s*([\d.]+)$/)
+  if (!match) {
+    console.warn(`[evalCondition] invalid expression: "${expr}"`)
+    return false
+  }
   const [, key, op, valStr] = match
   const a = ctx[key]
+  if (a === undefined) {
+    console.warn(`[evalCondition] unknown variable: "${key}" in "${expr}"`)
+    return false
+  }
   const b = parseFloat(valStr)
-  if (a === undefined) return false
+  if (isNaN(b)) return false
   switch (op) {
     case '>=': return a >= b
     case '<=': return a <= b
     case '>':  return a > b
     case '<':  return a < b
     case '==': return a === b
+    case '!=': return a !== b
     default:   return false
   }
 }

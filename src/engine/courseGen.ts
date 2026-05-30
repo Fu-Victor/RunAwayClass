@@ -1,12 +1,12 @@
 import type { Course, DifficultyConfig, Teacher, TeacherSpecial, TeacherTrait } from './types'
-import { ROLL_CALL_BASE } from './constants'
+import { ROLL_CALL_BASE, TIME_SLOTS, TOTAL_DAYS } from './constants'
 import { chance, pick, probLabel } from './random'
 
 export function generateCourses(config: DifficultyConfig): Course[][] {
   const courses: Course[][] = []
-  for (let day = 0; day < 7; day++) {
+  for (let day = 0; day < TOTAL_DAYS; day++) {
     const dayCourses: Course[] = []
-    for (let slot = 0; slot < 9; slot++) {
+    for (let slot = 0; slot < TIME_SLOTS.length; slot++) {
       const type = chance(config.courseSeriousRatio) ? 'serious' : 'easy'
       dayCourses.push({
         id: `d${day}-s${slot}`,
@@ -14,7 +14,6 @@ export function generateCourses(config: DifficultyConfig): Course[][] {
         type,
         teacher: generateTeacher(),
         timeSlotIndex: slot,
-        estimatedRollCallProb: 'low',
       })
     }
     courses.push(dayCourses)
@@ -48,6 +47,15 @@ export function calcRollCallProb(
   return Math.max(0, Math.min(1, prob))
 }
 
+// 实时获取某门课的估算点名概率标签（不再缓存到 Course 上）
+export function getEstimatedProbLabel(
+  course: Course,
+  skipHistoryCount: number,
+  config: DifficultyConfig,
+): 'low' | 'medium' | 'high' | 'very_high' {
+  return probLabel(calcRollCallProb(course, skipHistoryCount, config))
+}
+
 export function checkRollCall(prob: number): boolean {
   return chance(prob)
 }
@@ -56,16 +64,11 @@ export function finalizeCourses(
   courses: Course[][],
   courseNames: readonly string[],
   teacherNames: Record<TeacherTrait, readonly string[]>,
-  skipHistoryCount: number,
-  config: DifficultyConfig,
 ): void {
   for (const dayCourses of courses) {
     for (const course of dayCourses) {
       course.name = pick(courseNames)
       course.teacher.name = pick(teacherNames[course.teacher.trait])
-      course.estimatedRollCallProb = probLabel(
-        calcRollCallProb(course, skipHistoryCount, config),
-      )
     }
   }
 }

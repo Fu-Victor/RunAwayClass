@@ -10,7 +10,8 @@ function parse<T>(raw: string, label: string): T {
   try {
     return load(raw) as T
   } catch (e) {
-    throw new Error(`解析 ${label} 失败: ${e}`)
+    const msg = e instanceof Error ? e.message : String(e)
+    throw new Error(`解析 ${label} 失败: ${msg}`)
   }
 }
 

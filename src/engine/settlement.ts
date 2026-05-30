@@ -1,6 +1,7 @@
 import type { GameState, PlayerStats, StatsDelta } from './types'
 import { DAILY_DECAY, STAT_MAX, STAT_MIN } from './constants'
 import { settlementTexts } from '../content/loader'
+import { clamp } from './random'
 
 export interface SettlementResult {
   deltas: StatsDelta
@@ -19,7 +20,7 @@ export function settleDay(state: GameState): SettlementResult {
     total[key] = (total[key] ?? 0) + DAILY_DECAY[key]
   }
 
-  const secondaryAvg = (stats.energy + stats.hunger + stats.entertainment) / 3
+  const secondaryAvg = getSecondaryAvg(stats)
   const moodDeltaFromAvg = Math.round((secondaryAvg - thresholds.expectedAvg) / 10)
   total.mood = (total.mood ?? 0) + moodDeltaFromAvg
 
@@ -48,7 +49,11 @@ export function applyDeltas(stats: PlayerStats, deltas: StatsDelta): PlayerStats
   const result = { ...stats }
   for (const key of Object.keys(deltas) as (keyof PlayerStats)[]) {
     const delta = deltas[key] ?? 0
-    result[key] = Math.max(STAT_MIN[key], Math.min(STAT_MAX[key], result[key] + delta))
+    result[key] = clamp(result[key] + delta, STAT_MIN[key], STAT_MAX[key])
   }
   return result
+}
+
+export function getSecondaryAvg(stats: PlayerStats): number {
+  return (stats.energy + stats.hunger + stats.entertainment) / 3
 }
