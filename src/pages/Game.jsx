@@ -9,9 +9,9 @@ import {
   PHASES,
   SCREENS,
   periodGroups,
+  HIRE_COST,
 } from '../store/gameStore.jsx'
-import { statMeta, sidebarStats } from '../data/statMeta.js'
-import { getStatDescription, getStatLevel, getNightMindset, thresholdAlerts } from '../data/textPools.js'
+import { statMeta, sidebarStats, getStatDescription, getStatLevel, getNightMindset, getThresholdAlerts } from '../utils/gameHelpers.js'
 
 // ==================== 静态数据 ====================
 const messages = [
@@ -65,14 +65,15 @@ function SideStatus() {
 }
 
 function ThresholdAlerts() {
-  const { stats, gameThresholds } = useGame()
-  const alerts = []
-  if (stats.credits <= gameThresholds.creditWarning && stats.credits > 0) alerts.push(thresholdAlerts.creditWarning[0])
-  if (stats.credits >= gameThresholds.creditTutor) alerts.push(thresholdAlerts.creditTutor[0])
-  if (stats.energy < 25) alerts.push(thresholdAlerts.energyLow[0])
-  if (stats.hunger < 25) alerts.push(thresholdAlerts.fullnessLow[0])
-  if (alerts.length === 0) return null
-  return <div className="threshold-alerts">{alerts.slice(0, 2).map((a, i) => <p key={i}>{a}</p>)}</div>
+  const { stats, gameThresholds, difficulty } = useGame()
+  const alerts = getThresholdAlerts(difficulty)
+  const msgs = []
+  if (stats.credits <= gameThresholds.creditWarning && stats.credits > 0) msgs.push(alerts.creditWarning[0])
+  if (stats.credits >= gameThresholds.creditTutor) msgs.push(alerts.creditTutor[0])
+  if (stats.energy < 25) msgs.push(alerts.energyLow[0])
+  if (stats.hunger < 25) msgs.push(alerts.hungerLow[0])
+  if (msgs.length === 0) return null
+  return <div className="threshold-alerts">{msgs.slice(0, 2).map((a, i) => <p key={i}>{a}</p>)}</div>
 }
 
 // ==================== 左侧手机 ====================
@@ -80,7 +81,7 @@ function PhoneFrame() {
   const {
     phoneTab, setPhoneTab,
     todayCourses, coursesWithEstimate, currentCourse, phase, day,
-    coursePlan, setCoursePlan, dawnAction, setDawnAction, submitNight,
+    stats, coursePlan, setCoursePlan, dawnAction, setDawnAction, submitNight, difficultyConfig: dc, gameThresholds,
   } = useGame()
 
   const [selectedCourseId, setSelectedCourseId] = useState(null)
@@ -105,8 +106,14 @@ function PhoneFrame() {
     setSelectedCourseId((prev) => (prev === courseId ? null : courseId))
   }
 
+  // 计算当前计划中找人代课的总花费
+  const hireCount = Object.values(coursePlan).filter((v) => v === 'hire_sub').length
+  const totalHireCost = hireCount * HIRE_COST
+
   const applyDecision = (actionKey) => {
     if (!canEdit || !selectedCourseId) return
+    if (actionKey === 'hire_sub' && coursePlan[selectedCourseId] !== 'hire_sub' && totalHireCost + HIRE_COST > stats.money) return
+    if (actionKey === 'tutor' && stats.credits < gameThresholds.creditTutor) return
     setCoursePlan(selectedCourseId, actionKey)
   }
 
@@ -187,6 +194,9 @@ function PhoneFrame() {
                     const isNow = phase === PHASES.DAY && currentIdx === realIdx
                     const actionsForSlot = course.isFree ? FREE_ACTIONS : COURSE_ACTIONS
                     const meta = actionsForSlot.find((d) => d.key === decision)
+                    const riskColors = { '低': '#22c55e', '中': '#4a90d9', '高': '#f59e0b', '极高': '#ef4444' }
+                    const riskColor = course.isFree ? 'transparent' : (riskColors[course.estimatedRollCall] || '#999')
+                    const isSkip = decision === 'skip'
                     return (
                       <article
                         key={course.id}
@@ -196,15 +206,12 @@ function PhoneFrame() {
                         <button className="course-tile" style={{ background: meta?.color || (course.isFree ? '#555' : '#4a6fa5') }}>
                           <span>{course.name}</span>
                           <small>{course.teacher}</small>
-                          <small>
-                            {course.isFree ? '空闲时段' : `${course.type} · 点名${course.estimatedRollCall || '中'}`}
-                          </small>
+                          {!course.isFree && (
+                            <b className="risk-badge" style={{ background: riskColor }}>
+                              {course.estimatedRollCall || '中'}
+                            </b>
+                          )}
                         </button>
-                        <i
-                          className="course-decision-dot"
-                          style={{ background: meta?.color || '#666' }}
-                          title={meta?.label || decision}
-                        />
                         <time>{course.time}</time>
                       </article>
                     )
@@ -239,16 +246,25 @@ function PhoneFrame() {
                     : '点选课程 → 点下方按钮决定'}
                 </div>
                 <div className="decision-bar-btns">
-                  {selectedCourse && !selectedCourse.isFree && COURSE_ACTIONS.map((d) => (
-                    <button
-                      key={d.key}
-                      className="decision-btn"
-                      style={{ background: d.color }}
-                      onClick={() => applyDecision(d.key)}
-                    >
-                      {d.label}
-                    </button>
-                  ))}
+                  {selectedCourse && !selectedCourse.isFree && COURSE_ACTIONS.map((d) => {
+                    const alreadyHire = coursePlan[selectedCourse.id] === 'hire_sub'
+                    const overBudget = d.key === 'hire_sub' && !alreadyHire && totalHireCost + HIRE_COST > stats.money
+                    const tutorLocked = d.key === 'tutor' && stats.credits < gameThresholds.creditTutor
+                    const disabled = (d.key === 'hire_sub' && stats.money < HIRE_COST) || overBudget || tutorLocked
+                    return (
+                      <button
+                        key={d.key}
+                        disabled={disabled}
+                        className="decision-btn"
+                        style={{ background: d.color, opacity: disabled ? 0.3 : 1 }}
+                        onClick={() => applyDecision(d.key)}
+                      >
+                        {d.label}
+                        {d.key === 'hire_sub' ? ` ¥${HIRE_COST}` : ''}
+                        {tutorLocked ? ` ≥${gameThresholds.creditTutor}学分` : ''}
+                      </button>
+                    )
+                  })}
                   {selectedCourse && selectedCourse.isFree && FREE_ACTIONS.map((d) => (
                     <button
                       key={d.key}
@@ -294,14 +310,19 @@ function BottomConsole() {
 
 /** 夜晚：提示用户在手机中做决策 */
 function NightPhaseCenter() {
-  const { stats, setPhoneTab } = useGame()
+  const { stats, setPhoneTab, skipCount } = useGame()
   const mindset = getNightMindset(stats)
+  const riskLevel = skipCount < 2 ? '安全' : skipCount < 5 ? '注意' : skipCount < 9 ? '危险' : '高危'
   return (
     <>
       <p className="phase-pill">夜晚决策</p>
       <div className="day-panel night-hint-panel">
         <h2>{mindset}</h2>
-        <p>在左侧手机的「课表」中安排明天每节课的行为（课程时段选择上课/旷课/帮人代课/找人代课，空闲时段选择自习/补觉/吃饭/摸鱼），以及今晚的凌晨行为。</p>
+        <div className="risk-summary">
+          <span className="risk-label">累计旷课 <b>{skipCount}</b> 次</span>
+          <span className={`risk-level risk-${riskLevel}`}>点名风险：{riskLevel}</span>
+        </div>
+        <p>在左侧手机的「课表」中安排明天每节课的行为。课程卡片上的<b>彩色标签</b>显示该节课的估算点名概率——旷课越多，概率越高。</p>
         <button className="primary-action" onClick={() => setPhoneTab('schedule')}>打开课表安排</button>
       </div>
     </>
@@ -310,7 +331,73 @@ function NightPhaseCenter() {
 
 /** 白天：推进课程 */
 function DayPhaseCenter() {
-  const { currentCourse: course, coursePlan, advanceCourse } = useGame()
+  const { currentCourse: course, coursePlan, advanceCourse, nextCourse, skipCount, lastActionResult } = useGame()
+
+  // 刚完成一节课，显示结果
+  if (lastActionResult) {
+    const { courseName, actionKey, description, deltas, triggeredRollCall, triggeredSleep, triggeredPhone, hireSubFailed } = lastActionResult
+    const actionLabel = [...COURSE_ACTIONS, ...FREE_ACTIONS].find((a) => a.key === actionKey)?.label || actionKey
+
+    // 提取数值变动中非零的关键项
+    const deltaEntries = deltas ? Object.entries(deltas).filter(([, v]) => v !== 0 && v !== undefined) : []
+    const labelMap = { credits: '学分', mood: '心情', energy: '精力', hunger: '饱腹', entertainment: '娱乐', money: '金钱', roommateFavor: '舍友' }
+
+    return (
+      <>
+        <p className="phase-pill">课程结果</p>
+        <div className="day-panel course-result-panel">
+          <h2>{courseName}</h2>
+          <p className="result-desc">{description}</p>
+
+          {/* 数值变动 */}
+          {deltaEntries.length > 0 && (
+            <div className="delta-list">
+              {deltaEntries.map(([key, val]) => (
+                <span key={key} className={`delta-item ${val > 0 ? 'delta-up' : 'delta-down'}`}>
+                  {labelMap[key] || key} {val > 0 ? '+' : ''}{val}
+                </span>
+              ))}
+            </div>
+          )}
+
+          {/* 没去上课被点名：扣分了 */}
+          {triggeredRollCall && actionKey !== 'attend' && (
+            <div className="result-alert result-alert-danger">
+              ⚠️ 老师点名了！你没在教室，学分扣了 {(deltas?.credits || 0) < 0 ? Math.abs(deltas.credits) : 3} 分。
+            </div>
+          )}
+          {/* 在教室被点名：只是答个到 */}
+          {triggeredRollCall && actionKey === 'attend' && (
+            <div className="result-alert result-alert-safe">
+              ✅ 老师点名了，你在教室，正常答到。
+            </div>
+          )}
+          {/* 没去上课但没被点：赌赢了 */}
+          {!triggeredRollCall && actionKey !== 'attend' && actionKey !== 'hire_sub' && (
+            <div className="result-alert result-alert-safe">
+              ✅ 安全过关，老师没点名！
+            </div>
+          )}
+          {triggeredSleep && (
+            <div className="result-alert result-alert-warn">
+              😴 太困了在课上睡着了，错过了部分内容。
+            </div>
+          )}
+          {triggeredPhone && (
+            <div className="result-alert result-alert-warn">
+              📱 忍不住刷了手机，老师多看了你两眼。
+            </div>
+          )}
+          {hireSubFailed && (
+            <div className="result-alert result-alert-danger">
+              💸 找的代课人也没去！钱白花了还被扣分。
+            </div>
+          )}
+          <button className="primary-action" onClick={nextCourse}>继续</button>
+        </div>
+      </>
+    )
+  }
 
   if (!course) {
     return (
@@ -328,6 +415,9 @@ function DayPhaseCenter() {
   const actionsForSlot = course.isFree ? FREE_ACTIONS : COURSE_ACTIONS
   const actionMeta = actionsForSlot.find((a) => a.key === actionKey)
   const actionLabel = actionMeta?.label || actionKey
+  const riskText = course.isFree ? null : (
+    `点名风险：${course.estimatedRollCall || '中'} | 累计旷课 ${skipCount} 次`
+  )
 
   return (
     <>
@@ -335,8 +425,13 @@ function DayPhaseCenter() {
       <div className="day-panel">
         <div className="student-animation"><span /></div>
         <h2>{course.time} · {course.name}</h2>
-        <p>{course.isFree ? '空闲时段' : `${course.teacher} 正在教室里…`} 你的安排：{actionLabel}</p>
-        <button className="primary-action" onClick={advanceCourse}>推进</button>
+        <p>
+          {course.isFree
+            ? '空闲时段'
+            : `${course.teacher} · ${course.type} · ${riskText}`}
+        </p>
+        <p>你的安排：<b>{actionLabel}</b></p>
+        <button className="primary-action" onClick={advanceCourse}>推进这节课</button>
       </div>
     </>
   )
@@ -424,22 +519,22 @@ function MenuScreen() {
 }
 
 function DifficultyScreen() {
-  const { startGame, setScreen } = useGame()
-  const entries = [
-    { key: 'easy', label: '轻松', caption: '水课多，老师慈眉善目' },
-    { key: 'normal', label: '普通', caption: '标准大学生生存体验' },
-    { key: 'hard', label: '困难', caption: '早八、点名、作业一起上桌' },
-  ]
+  const { startGame, setScreen, difficultyConfig: dc } = useGame()
+  const captions = {
+    easy: '水课多，老师慈眉善目，点名少',
+    normal: '标准大学生生存体验，各半',
+    hard: '早八、点名狂魔、作业一起上桌',
+  }
   return (
     <div className="game-shell menu-shell">
       <section className="start-panel difficulty-panel">
         <p className="eyebrow">先选一个生存难度</p>
         <h1>选择难度</h1>
         <div className="difficulty-grid">
-          {entries.map((item) => (
-            <button key={item.key} onClick={() => startGame(item.key)}>
-              <span>{item.label}</span>
-              <small>{item.caption}</small>
+          {(['easy', 'normal', 'hard']).map((key) => (
+            <button key={key} onClick={() => startGame(key)}>
+              <span>{key === 'easy' ? '轻松' : key === 'normal' ? '普通' : '困难'}</span>
+              <small>{captions[key]}</small>
             </button>
           ))}
         </div>
@@ -463,7 +558,7 @@ function SimplePanel({ title, lines, onBack }) {
 
 // ==================== 主游戏画面 ====================
 function GameBoard() {
-  const { phase, stats, currentEvent } = useGame()
+  const { phase, stats, currentEvent, lastActionResult } = useGame()
   return (
     <div className={`game-shell ${stats.mood < 20 ? 'danger-mood' : ''}`}>
       <PhoneFrame />
@@ -478,7 +573,7 @@ function GameBoard() {
           </div>
           <div className="stage-overlay">
             {phase === PHASES.NIGHT && <NightPhaseCenter />}
-            {phase === PHASES.DAY && currentEvent && <EventPanel />}
+            {phase === PHASES.DAY && currentEvent && !lastActionResult && <EventPanel />}
             {phase === PHASES.DAY && !currentEvent && <DayPhaseCenter />}
             {phase === PHASES.SETTLEMENT && <SettlementPhase />}
             {phase === PHASES.RESULT && <ResultScreen />}

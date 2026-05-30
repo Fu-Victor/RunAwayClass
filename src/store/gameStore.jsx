@@ -1,7 +1,7 @@
 /* eslint-disable react-refresh/only-export-components */
 import { createContext, useContext, useReducer, useMemo } from 'react'
 import { createInitialState } from '../engine/state'
-import { DIFFICULTY_CONFIGS, DEFAULT_THRESHOLDS, TIME_SLOTS } from '../engine/constants'
+import { DIFFICULTY_CONFIGS, DEFAULT_THRESHOLDS, TIME_SLOTS, HIRE_SUB_EFFECT } from '../engine/constants'
 import { resolveCourseAction, resolveDawnAction, resolveFreeSlotAction } from '../engine/actions'
 import { findEligibleEvents, tryTriggerEvent, resolveEventOption } from '../engine/events'
 import { settleDay, applyDeltas } from '../engine/settlement'
@@ -14,10 +14,29 @@ export const SCREENS = { MENU: 'menu', DIFFICULTY: 'difficulty', HISTORY: 'histo
 
 export const COURSE_ACTIONS = [
   { key: 'attend', label: '老实上课', color: '#79b8f5' },
-  { key: 'skip', label: '旷课跑路', color: '#f06db7' },
+  { key: 'fun', label: '娱乐', color: '#ffd772' },
+  { key: 'sleep', label: '睡觉', color: '#9b61f5' },
+  { key: 'meal', label: '吃饭', color: '#ffa36b' },
   { key: 'sub_for_other', label: '帮人代课', color: '#61e5e6' },
-  { key: 'hire_sub', label: '找人代课', color: '#ffa36b' },
+  { key: 'hire_sub', label: '找人代课', color: '#f06db7' },
+  { key: 'work', label: '打工', color: '#83d77a' },
+  { key: 'tutor', label: '家教', color: '#fbbf24' },
 ]
+
+// UI 行为映射到 engine CourseAction
+const UI_TO_ENGINE = {
+  attend: 'attend',
+  skip: 'skip',
+  fun: 'skip',
+  sleep: 'skip',
+  meal: 'skip',
+  sub_for_other: 'sub_for_other',
+  work: 'skip',
+  tutor: 'sub_for_other',
+  hire_sub: 'hire_sub',
+}
+
+export const HIRE_COST = Math.abs(HIRE_SUB_EFFECT.money)
 
 export const FREE_ACTIONS = [
   { key: 'self_study', label: '自习', color: '#79b8f5' },
@@ -110,6 +129,33 @@ function getThresholds(difficulty) {
   return DEFAULT_THRESHOLDS[difficulty]
 }
 
+const FATAL_STATS = ['mood', 'energy', 'hunger', 'entertainment', 'money']
+const FATAL_LABELS = { mood: '心情归零，你崩溃退学了', energy: '精力耗尽，你昏倒被送进医务室', hunger: '饿晕了，同学把你抬去食堂', entertainment: '精神枯竭，你对大学生活彻底绝望', money: '身无分文，连泡面都买不起了' }
+
+function checkStatsFailure(stats, state) {
+  for (const key of FATAL_STATS) {
+    if (stats[key] <= 0) {
+      return {
+        ...state,
+        stats,
+        phase: PHASES.RESULT,
+        lastActionResult: null,
+        currentEvent: null,
+        result: {
+          cleared: false,
+          failed: true,
+          rating: 'D',
+          title: FATAL_LABELS[key].split('，')[0],
+          desc: FATAL_LABELS[key],
+          tone: '',
+        },
+        history: [FATAL_LABELS[key], ...state.history].slice(0, 8),
+      }
+    }
+  }
+  return null
+}
+
 function buildEngineState(ctx) {
   return {
     phase: ctx.phase || 'START',
@@ -152,6 +198,7 @@ const initialState = {
   phoneTab: 'home',
   moodSnapshots: [],
   result: null,
+  lastActionResult: null,
 }
 
 function gameReducer(state, action) {
@@ -199,10 +246,12 @@ function gameReducer(state, action) {
 
     case 'SUBMIT_NIGHT': {
       const dawnResult = resolveDawnAction(state.dawnAction)
-      const nextStats = applyDeltas(state.stats, dawnResult.deltas)
+      const nextStats = clampStats(applyDeltas(state.stats, dawnResult.deltas))
+      const failed = checkStatsFailure(nextStats, state)
+      if (failed) return { ...failed, history: [dawnResult.description, ...failed.history].slice(0, 8) }
       return {
         ...state,
-        stats: clampStats(nextStats),
+        stats: nextStats,
         phase: PHASES.DAY,
         currentCourse: 0,
         history: [dawnResult.description, ...state.history].slice(0, 8),
@@ -217,11 +266,13 @@ function gameReducer(state, action) {
       }
 
       const config = DIFFICULTY_CONFIGS[state.difficulty]
-      const actionKey = state.coursePlan[course.id] || (course.isFree ? 'rest' : 'attend')
+      const uiActionKey = state.coursePlan[course.id] || (course.isFree ? 'rest' : 'attend')
+      // 将 UI 行为映射为 engine 支持的 4 种 CourseAction
+      const engineActionKey = UI_TO_ENGINE[uiActionKey] || uiActionKey
 
       let result
       if (course.isFree) {
-        result = resolveFreeSlotAction(actionKey)
+        result = resolveFreeSlotAction(uiActionKey)
       } else {
         const engineCourse = {
           id: course.id,
@@ -234,35 +285,93 @@ function gameReducer(state, action) {
           },
           timeSlotIndex: course.timeSlotIndex,
         }
-        result = resolveCourseAction(actionKey, engineCourse, state.stats, state.skipCount, config)
+        result = resolveCourseAction(engineActionKey, engineCourse, state.stats, state.skipCount, config)
+      }
+
+      // 找人代课的花费不受难度倍率影响（倍率导致简单反而更贵）
+      if (uiActionKey === 'hire_sub') {
+        result.deltas.money = HIRE_SUB_EFFECT.money
+      }
+
+      // UI 层特有行为：覆盖引擎的通用描述为具体行为描述
+      const UI_DESC = {
+        fun: result.triggeredRollCall
+          ? `${course.name}课上你溜去娱乐，结果${course.teacher}点名了，快乐瞬间打折。`
+          : `${course.name}时段你尽情娱乐，快乐指数飙升！`,
+        sleep: result.triggeredRollCall
+          ? `${course.name}课上你在宿舍睡大觉，${course.teacher}点名了都没听到。`
+          : `${course.name}时段你美美补了一觉，精力回满。`,
+        meal: result.triggeredRollCall
+          ? `${course.name}课上你在食堂大快朵颐，${course.teacher}点名时你正嚼着红烧肉。`
+          : `${course.name}时段你去食堂搓了一顿，肚子饱了心情好了。`,
+        work: result.triggeredRollCall
+          ? `打工回来发现${course.teacher}点名了，赚的钱还不够补扣的学分。`
+          : `${course.name}时段你打工赚了外快，虽然累但钱包鼓了。`,
+        tutor: result.triggeredRollCall
+          ? `家教回来发现${course.teacher}点名了，两头不讨好。`
+          : `${course.name}时段你给学弟学妹做家教，赚了钱还巩固了知识。`,
+      }
+      if (UI_DESC[uiActionKey]) {
+        result.description = UI_DESC[uiActionKey]
+      }
+
+      // 某些 UI 行为有额外效果（娱乐/睡觉/吃饭/打工/家教）
+      const uiExtras = {}
+      if (uiActionKey === 'fun') uiExtras.entertainment = 8
+      if (uiActionKey === 'sleep') uiExtras.energy = 8
+      if (uiActionKey === 'meal') uiExtras.hunger = 8
+      if (uiActionKey === 'work') uiExtras.money = 10
+      if (uiActionKey === 'tutor') { uiExtras.credits = 1; uiExtras.money = 5 }
+      for (const [k, v] of Object.entries(uiExtras)) {
+        result.deltas[k] = (result.deltas[k] || 0) + v
       }
 
       const nextStats = applyDeltas(state.stats, result.deltas)
-      const newSkipCount = actionKey === 'skip' ? state.skipCount + 1 : state.skipCount
+      const clampedStats = clampStats(nextStats)
+      const newSkipCount = (!course.isFree && uiActionKey !== 'attend' && uiActionKey !== 'hire_sub') ? state.skipCount + 1 : state.skipCount
 
-      const afterCourse = {
+      const failed = checkStatsFailure(clampedStats, { ...state, skipCount: newSkipCount })
+      if (failed) return { ...failed, history: [result.description, ...failed.history].slice(0, 8) }
+
+      return {
         ...state,
-        stats: clampStats(nextStats),
+        stats: clampedStats,
         skipCount: newSkipCount,
         history: [result.description, ...state.history].slice(0, 8),
+        lastActionResult: {
+          courseName: course.name,
+          actionKey: uiActionKey,
+          description: result.description,
+          deltas: result.deltas,
+          triggeredRollCall: result.triggeredRollCall || false,
+          triggeredSleep: result.triggeredSleep || false,
+          triggeredPhone: result.triggeredPhone || false,
+          hireSubFailed: result.hireSubFailed || false,
+        },
       }
+    }
 
-      const es = buildEngineState(afterCourse)
+    // 玩家看完课程结果后点击"继续"
+    case 'NEXT_COURSE': {
+      const es = buildEngineState({ ...state, currentCourse: state.currentCourse })
       const eligible = findEligibleEvents(eventPool, es, 'course_break')
       const fresh = eligible.filter((e) => !state.usedEventIds.includes(e.id))
       const picked = tryTriggerEvent(fresh)
+
+      const cleared = { ...state, lastActionResult: null }
+
       if (picked) {
         return {
-          ...afterCourse,
+          ...cleared,
           currentEvent: picked,
           usedEventIds: [...state.usedEventIds, picked.id],
         }
       }
 
       if (state.currentCourse < 8) {
-        return { ...afterCourse, currentCourse: state.currentCourse + 1 }
+        return { ...cleared, currentCourse: state.currentCourse + 1 }
       }
-      return { ...afterCourse, phase: PHASES.SETTLEMENT }
+      return { ...cleared, phase: PHASES.SETTLEMENT }
     }
 
     case 'RESOLVE_EVENT': {
@@ -270,11 +379,16 @@ function gameReducer(state, action) {
       const event = state.currentEvent
       if (!event) return state
       const resolved = resolveEventOption(event, optionIndex)
-      const nextStats = applyDeltas(state.stats, resolved.deltas)
+      const nextStats = clampStats(applyDeltas(state.stats, resolved.deltas))
+
+      const failed = checkStatsFailure(nextStats, state)
+      if (failed) {
+        return { ...failed, history: [resolved.flavorText, ...failed.history].slice(0, 8) }
+      }
 
       const afterEvent = {
         ...state,
-        stats: clampStats(nextStats),
+        stats: nextStats,
         currentEvent: null,
         history: [resolved.flavorText, ...state.history].slice(0, 8),
       }
@@ -384,7 +498,7 @@ export function GameProvider({ children }) {
     [todayCourses, state.currentCourse],
   )
 
-  const isGameOver = state.stats.mood <= 0
+  const isGameOver = FATAL_STATS.some((k) => state.stats[k] <= 0)
   const isCleared = state.phase === PHASES.RESULT && state.result?.cleared
 
   const coursesWithEstimate = useMemo(() => {
@@ -419,6 +533,7 @@ export function GameProvider({ children }) {
     reset: () => dispatch({ type: 'RESET' }),
     submitNight: () => dispatch({ type: 'SUBMIT_NIGHT' }),
     advanceCourse: () => dispatch({ type: 'ADVANCE_COURSE' }),
+    nextCourse: () => dispatch({ type: 'NEXT_COURSE' }),
     resolveEvent: (optionIndex) => dispatch({ type: 'RESOLVE_EVENT', payload: { optionIndex } }),
     settleDay: () => dispatch({ type: 'SETTLE_DAY' }),
   }), [])
