@@ -81,12 +81,12 @@ export function finalizeCourses(
   courseNames: readonly string[],
   teacherNames: Record<TeacherTrait, readonly string[]>,
 ): void {
-  for (const dayCourses of courses) {
-    for (const course of dayCourses) {
+  for (let day = 0; day < courses.length; day++) {
+    for (const course of courses[day]) {
       if (course === null) continue
       course.name = pick(courseNames)
       course.teacher.name = pick(teacherNames[course.teacher.trait])
-      course.id = `d${course.timeSlotIndex}-${course.name.slice(0, 4)}`
+      course.id = `d${day}-s${course.timeSlotIndex}-${course.name.slice(0, 6)}`
     }
   }
 }

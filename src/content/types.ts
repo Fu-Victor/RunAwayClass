@@ -49,7 +49,7 @@ export interface ActionTexts {
     goOut: string
     normalRest: string
   }
-  freeSlot: Record<string, string>
+  freeSlot: Record<'self_study' | 'rest' | 'eat' | 'entertain', string>
 }
 
 export interface SettlementTexts {
