@@ -27,17 +27,17 @@ describe('resolveCourseAction', () => {
   it('attend 心情 >=70 额外加分', () => {
     const happy = { ...baseStats, mood: 80 }
     const r = resolveCourseAction('attend', normalCourse, happy, 0, config)
-    expect(r.deltas.credits).toBeGreaterThan(4) // 基础4 + 额外2
+    expect(r.deltas.credits).toBeGreaterThan(3) // 基础2 + 额外2
   })
 
   it('attend 心情 <=30 学分衰减', () => {
     const sad = { ...baseStats, mood: 20 }
     const r = resolveCourseAction('attend', normalCourse, sad, 0, config)
-    expect(r.deltas.credits).toBeLessThan(4) // 基础4 - 衰减
+    expect(r.deltas.credits).toBeLessThan(2) // 基础2 - 衰减
   })
 
   it('skip 未被点名时回血', () => {
-    // 不爱点名的老师+正课+非早八 → 概率很低
+    // 不爱点名的老师+水课+非早八 → 概率很低
     const safeCourse: Course = {
       ...normalCourse,
       teacher: { name: '王划水', trait: 'roll_call_hater', special: null },
@@ -47,7 +47,7 @@ describe('resolveCourseAction', () => {
     const r = resolveCourseAction('skip', safeCourse, baseStats, 0, config)
     expect(r.deltas.energy).toBeGreaterThan(0)
     expect(r.deltas.hunger).toBeGreaterThan(0)
-    expect(r.triggeredRollCall).toBe(false)
+    // 点名概率 15%，非确定性，不做触发断言
   })
 
   it('skip 累计旷课影响点名概率', () => {
@@ -78,9 +78,10 @@ describe('resolveCourseAction', () => {
       teacher: { name: '王划水', trait: 'roll_call_hater', special: null },
     }
     const r = resolveCourseAction('hire_sub', safeCourse, baseStats, 0, config)
-    expect(r.deltas.money).toBe(-25)
-    expect(r.hireSubFailed).toBe(false)
+    expect(r.deltas.money).toBe(-35)
+    // 不被点名（老师不爱点名 + 非正课 + 非早八）
     expect(r.triggeredRollCall).toBe(false)
+    // hireSubFailed 有概率，不做确定性断言
   })
 
   it('rewardMultiplier 影响收益', () => {
@@ -127,12 +128,12 @@ describe('resolveFreeSlotAction', () => {
 
   it('rest 精力恢复最多', () => {
     const r = resolveFreeSlotAction('rest')
-    expect(r.deltas.energy).toBeGreaterThan(10)
+    expect(r.deltas.energy).toBeGreaterThan(5)
   })
 
   it('eat 饱腹恢复最多', () => {
     const r = resolveFreeSlotAction('eat')
-    expect(r.deltas.hunger).toBeGreaterThan(10)
+    expect(r.deltas.hunger).toBeGreaterThan(5)
   })
 
   it('self_study 有学分收入', () => {

@@ -68,50 +68,50 @@ export const ROLL_CALL_BASE = {
 
 // 老实上课的基础收益（最终受 rewardMultiplier 缩放）
 export const ATTEND_EFFECT: PlayerStats = {
-  credits: 4, mood: 0, energy: -8, hunger: -6, entertainment: -3, money: 0, roommateFavor: 0,
+  credits: 2, mood: 0, energy: -11, hunger: -8, entertainment: -4, money: 0, roommateFavor: 0,
 }
 
 // 旷课的基础收益 — 回血但不给学分
 export const SKIP_EFFECT: PlayerStats = {
-  credits: 0, mood: 0, energy: 12, hunger: 8, entertainment: 10, money: 0, roommateFavor: 0,
+  credits: 0, mood: 0, energy: 6, hunger: 4, entertainment: 5, money: 0, roommateFavor: 0,
 }
 
 // 帮人代课 — 拿钱但消耗更大
 export const SUB_FOR_OTHER_EFFECT: PlayerStats = {
-  credits: 2, mood: -2, energy: -12, hunger: -6, entertainment: -5, money: 20, roommateFavor: 0,
+  credits: 1, mood: -3, energy: -17, hunger: -8, entertainment: -7, money: 10, roommateFavor: 0,
 }
 
 // 找人代课 — 基础效果（风险叠加在 actions.ts 中处理）
 export const HIRE_SUB_EFFECT: PlayerStats = {
-  credits: 0, mood: 0, energy: 0, hunger: 0, entertainment: 0, money: -25, roommateFavor: 0,
+  credits: 0, mood: 0, energy: 0, hunger: 0, entertainment: 0, money: -35, roommateFavor: 0,
 }
 
-export const HIRE_SUB_RISK = 0.15
+export const HIRE_SUB_RISK = 0.20
 
 // 空闲时段行为效果（不受 rewardMultiplier 影响）
 export const FREE_SLOT_EFFECTS: Record<FreeAction, PlayerStats> = {
-  self_study: { credits: 1, mood: 0, energy: -5,  hunger: -3, entertainment: -5,  money: 0, roommateFavor: 0 },
-  rest:       { credits: 0, mood: 0, energy: 20,  hunger: -3, entertainment: -2,  money: 0, roommateFavor: 0 },
-  eat:        { credits: 0, mood: 0, energy: 5,   hunger: 20, entertainment: 3,   money: 0, roommateFavor: 0 },
-  entertain:  { credits: 0, mood: 0, energy: -3,  hunger: -3, entertainment: 15,  money: 0, roommateFavor: 0 },
+  self_study: { credits: 1, mood: 0, energy: -7,  hunger: -3, entertainment: -5,  money: 0, roommateFavor: 0 },
+  rest:       { credits: 0, mood: 0, energy: 10,  hunger: -3, entertainment: -2,  money: 0, roommateFavor: 0 },
+  eat:        { credits: 0, mood: 0, energy: 5,   hunger: 10, entertainment: 3,   money: 0, roommateFavor: 0 },
+  entertain:  { credits: 0, mood: 0, energy: -3,  hunger: -3, entertainment: 8,   money: 0, roommateFavor: 0 },
 }
 
 // go_out 凌晨行为的舍友好感度随机变化参数
 export const GO_OUT_ROOMMATE_DELTA = {
-  positive: 5,
-  negative: -5,
+  positive: 7,
+  negative: -7,
   threshold: 0.5,
 } as const
 
 export const DAWN_EFFECTS: Record<DawnAction, PlayerStats> = {
-  sleep_early: { credits: 0, mood: 5,  energy: 30,  hunger: -3, entertainment: -5,  money: 0,   roommateFavor: 5 },
-  gaming:      { credits: 0, mood: 3,  energy: -20, hunger: -5, entertainment: 25,  money: 0,   roommateFavor: -10 },
-  cram:        { credits: 3, mood: -3, energy: -25, hunger: -3, entertainment: -8,  money: 0,   roommateFavor: 0 },
-  go_out:      { credits: 0, mood: 10, energy: -15, hunger: 5,  entertainment: 20,  money: -20, roommateFavor: 0 },
-  normal_rest: { credits: 0, mood: 1,  energy: 10,  hunger: -3, entertainment: 0,   money: 0,   roommateFavor: 2 },
+  sleep_early: { credits: 0, mood: 3,  energy: 15,  hunger: -3, entertainment: -5,  money: 0,   roommateFavor: 5 },
+  gaming:      { credits: 0, mood: 3,  energy: -28, hunger: -5, entertainment: 13,  money: 0,   roommateFavor: -14 },
+  cram:        { credits: 2, mood: -3, energy: -35, hunger: -3, entertainment: -8,  money: 0,   roommateFavor: 0 },
+  go_out:      { credits: 0, mood: 5,  energy: -15, hunger: 5,  entertainment: 10,  money: -28, roommateFavor: 0 },
+  normal_rest: { credits: 0, mood: 1,  energy: 5,   hunger: -3, entertainment: 0,   money: 0,   roommateFavor: 2 },
 }
 
 // 每日自然消耗，在结算时叠加
 export const DAILY_DECAY: PlayerStats = {
-  credits: 0, mood: 0, energy: -5, hunger: -10, entertainment: -8, money: 0, roommateFavor: 0,
+  credits: 0, mood: 0, energy: -7, hunger: -14, entertainment: -11, money: 0, roommateFavor: 0,
 }

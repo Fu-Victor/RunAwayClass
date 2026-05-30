@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { findEligibleEvents, tryTriggerEvent, resolveEventOption } from '../events'
+import { findEligibleEvents, tryTriggerEvent, resolveEventOption, resolveText } from '../events'
 import { createInitialState } from '../state'
 import type { DayDecision, GameEvent } from '../types'
 
@@ -22,6 +22,31 @@ const dawnEvent: GameEvent = {
   title: '凌晨测试',
   description: '测试',
   options: [{ text: 'A', effects: {}, flavorText: 'ok' }],
+}
+
+// 包含文案分叉的事件
+const branchedEvent: GameEvent = {
+  id: 'test_branched',
+  phase: 'course_break',
+  condition: 'default',
+  title: '分叉测试',
+  description: {
+    attend: '你在教室看到了测试提示',
+    skip: '你在宿舍收到了测试消息',
+    free: '你路过时看到了测试提示',
+    default: '默认测试文案',
+  },
+  options: [
+    {
+      text: 'A',
+      effects: { credits: 1 },
+      flavorText: {
+        attend: '教室内的结果',
+        skip: '宿舍内的结果',
+        default: '默认结果',
+      },
+    },
+  ],
 }
 
 describe('findEligibleEvents', () => {
@@ -68,17 +93,56 @@ describe('tryTriggerEvent', () => {
 })
 
 describe('resolveEventOption', () => {
-  it('返回选项效果和文案', () => {
-    const r = resolveEventOption(sampleEvent, 0)
+  it('返回选项效果和文案 (string flavorText)', () => {
+    const r = resolveEventOption(sampleEvent, 0, 'attend')
     expect(r.deltas.credits).toBe(1)
     expect(r.flavorText).toBe('ok')
   })
 
   it('越界索引抛错', () => {
-    expect(() => resolveEventOption(sampleEvent, 99)).toThrow('out of range')
+    expect(() => resolveEventOption(sampleEvent, 99, 'attend')).toThrow('out of range')
   })
 
   it('负索引抛错', () => {
-    expect(() => resolveEventOption(sampleEvent, -1)).toThrow('out of range')
+    expect(() => resolveEventOption(sampleEvent, -1, 'attend')).toThrow('out of range')
+  })
+
+  it('按 action 解析分叉 flavorText', () => {
+    const rSkip = resolveEventOption(branchedEvent, 0, 'skip')
+    expect(rSkip.flavorText).toBe('宿舍内的结果')
+
+    const rAttend = resolveEventOption(branchedEvent, 0, 'attend')
+    expect(rAttend.flavorText).toBe('教室内的结果')
+
+    // 不匹配的 action fallback 到 default
+    const rUnknown = resolveEventOption(branchedEvent, 0, 'hire_sub')
+    expect(rUnknown.flavorText).toBe('默认结果')
+  })
+})
+
+describe('resolveText', () => {
+  it('string 直接返回', () => {
+    expect(resolveText('普通文案', 'attend')).toBe('普通文案')
+  })
+
+  it('Record 按 action 匹配', () => {
+    const map = { attend: '教室文案', skip: '宿舍文案', free: '路过文案' }
+    expect(resolveText(map, 'skip')).toBe('宿舍文案')
+    expect(resolveText(map, 'attend')).toBe('教室文案')
+    expect(resolveText(map, 'free')).toBe('路过文案')
+  })
+
+  it('Record 无匹配 fallback 到 default', () => {
+    const map = { attend: '教室文案', default: '默认文案' }
+    expect(resolveText(map, 'skip')).toBe('默认文案')
+  })
+
+  it('Record 无 default 也无匹配 fallback 到第一个值', () => {
+    const map = { attend: '唯一文案' }
+    expect(resolveText(map, 'skip')).toBe('唯一文案')
+  })
+
+  it('空 Record fallback 到空字符串', () => {
+    expect(resolveText({}, 'attend')).toBe('')
   })
 })

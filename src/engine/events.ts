@@ -28,21 +28,41 @@ export function tryTriggerEvent(
 export function resolveEventOption(
   event: GameEvent,
   optionIndex: number,
+  action: string,
 ): { deltas: StatsDelta; flavorText: string } {
   if (optionIndex < 0 || optionIndex >= event.options.length) {
     throw new Error(`resolveEventOption: index ${optionIndex} out of range for event ${event.id}`)
   }
   const opt = event.options[optionIndex]
-  return { deltas: { ...opt.effects }, flavorText: opt.flavorText }
+  return { deltas: { ...opt.effects }, flavorText: resolveText(opt.flavorText, action) }
+}
+
+/**
+ * 解析分叉文案：如果是 string 直接返回；如果是 Record 则按 action 取，
+ * 无匹配时 fallback 到 'default' → 第一个值 → 空字符串。
+ */
+export function resolveText(
+  text: string | Record<string, string>,
+  action: string,
+): string {
+  if (typeof text === 'string') return text
+  return text[action] ?? text['default'] ?? Object.values(text)[0] ?? ''
 }
 
 function buildTriggerCtx(state: GameState): Record<string, string | number> {
   const { stats, day, courseIndex, currentDecision } = state
   const course = state.courses[day - 1]?.[courseIndex] ?? null
-  const action = course !== null ? currentDecision?.courseActions[courseIndex] : undefined
+
+  // 空闲时段：action 标记为 'free'，方便 YAML 分叉
+  let action: string
+  if (course === null) {
+    action = 'free'
+  } else {
+    action = currentDecision?.courseActions[courseIndex] ?? ''
+  }
 
   return {
-    action: action ?? '',
+    action,
     trait: course?.teacher?.trait ?? '',
     special: course?.teacher?.special ?? '',
     credits: stats.credits,

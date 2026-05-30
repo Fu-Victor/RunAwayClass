@@ -98,8 +98,8 @@ export function createDayDecision(
 export interface EventOption {
   text: string
   effects: StatsDelta
-  // 玩家选择后展示的反馈文案
-  flavorText: string
+  // 玩家选择后展示的反馈文案 — 支持按 action 分叉
+  flavorText: string | Record<string, string>
 }
 
 export interface GameEvent {
@@ -108,7 +108,7 @@ export interface GameEvent {
   // 触发条件表达式，由 events.ts 的 parseCondition 解析
   condition: string
   title: string
-  description: string
+  description: string | Record<string, string>
   options: EventOption[]
 }
 
