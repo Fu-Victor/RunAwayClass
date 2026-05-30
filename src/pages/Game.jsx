@@ -462,18 +462,30 @@ function EventPanel() {
 
 /** 每日结算 */
 function SettlementPhase() {
-  const { stats, day, settleDay } = useGame()
-  const dailyText = stats.mood < 40
-    ? '今天有点惨，但至少人还在。'
-    : stats.mood > 70
-      ? '今天过得不错，你的大学生涯又多活了一天。'
-      : '今天就这样吧，不算好也不算坏。'
+  const { stats, day, settleDay, settlementResult, dismissSettlement } = useGame()
+
+  if (settlementResult) {
+    return (
+      <>
+        <p className="phase-pill">每日结算</p>
+        <div className="settlement-panel">
+          <h2>第 {day - 1} 天结算</h2>
+          <p>{settlementResult}</p>
+          <div className="result-stats">
+            <p>学分：{stats.credits} | 心情：{stats.mood} | 金钱：¥{stats.money} | 舍友好感：{stats.roommateFavor}</p>
+          </div>
+          <button className="primary-action" onClick={dismissSettlement}>进入第 {day} 天</button>
+        </div>
+      </>
+    )
+  }
+
   return (
     <>
       <p className="phase-pill">每日结算</p>
       <div className="settlement-panel">
         <h2>第 {day} 天结束</h2>
-        <p>{dailyText}</p>
+        <p>期末考倒数 {8 - day} 天，你还能撑多久？</p>
         <button className="primary-action" onClick={settleDay}>进入下一天</button>
       </div>
     </>

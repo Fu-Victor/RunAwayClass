@@ -50,6 +50,10 @@ export interface ActionTexts {
     normalRest: string
   }
   freeSlot: Record<'self_study' | 'rest' | 'eat' | 'entertain', string>
+  uiActions: Record<'fun' | 'sleep' | 'meal' | 'work' | 'tutor', {
+    rollCall: string
+    safe: string
+  }>
 }
 
 export interface SettlementTexts {
