@@ -3,7 +3,7 @@ import { createContext, useContext, useReducer, useMemo } from 'react'
 import { createInitialState } from '../engine/state'
 import { DIFFICULTY_CONFIGS, DEFAULT_THRESHOLDS, TIME_SLOTS, HIRE_SUB_EFFECT } from '../engine/constants'
 import { resolveCourseAction, resolveDawnAction, resolveFreeSlotAction } from '../engine/actions'
-import { findEligibleEvents, tryTriggerEvent, resolveEventOption } from '../engine/events'
+import { findEligibleEvents, tryTriggerEvent, resolveEventOption, resolveText } from '../engine/events'
 import { settleDay, applyDeltas } from '../engine/settlement'
 import { evaluate, evaluateFailure } from '../engine/evaluation'
 import { finalizeCourses, getEstimatedProbLabel } from '../engine/courseGen'
@@ -361,9 +361,18 @@ function gameReducer(state, action) {
       const cleared = { ...state, lastActionResult: null }
 
       if (picked) {
+        // 解析分叉文案为纯字符串（EventPanel 直接渲染）
+        const todayCourses = state.courses.filter((c) => c.day === state.day)
+        const course = todayCourses[state.currentCourse]
+        const uiAction = course ? (state.coursePlan[course.id] || (course.isFree ? 'rest' : 'attend')) : 'attend'
+        const engineAction = course?.isFree ? 'free' : (UI_TO_ENGINE[uiAction] || uiAction)
+        const resolvedEvent = {
+          ...picked,
+          description: resolveText(picked.description, engineAction),
+        }
         return {
           ...cleared,
-          currentEvent: picked,
+          currentEvent: resolvedEvent,
           usedEventIds: [...state.usedEventIds, picked.id],
         }
       }
@@ -378,7 +387,12 @@ function gameReducer(state, action) {
       const { optionIndex } = action.payload
       const event = state.currentEvent
       if (!event) return state
-      const resolved = resolveEventOption(event, optionIndex)
+      // 解析事件文案需要当前 action 上下文
+      const todayCourses = state.courses.filter((c) => c.day === state.day)
+      const course = todayCourses[state.currentCourse]
+      const uiAction = course ? (state.coursePlan[course.id] || (course.isFree ? 'rest' : 'attend')) : 'attend'
+      const engineAction = course?.isFree ? 'free' : (UI_TO_ENGINE[uiAction] || uiAction)
+      const resolved = resolveEventOption(event, optionIndex, engineAction)
       const nextStats = clampStats(applyDeltas(state.stats, resolved.deltas))
 
       const failed = checkStatsFailure(nextStats, state)
